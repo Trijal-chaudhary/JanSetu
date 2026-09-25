@@ -1,0 +1,16 @@
+# Node
+server/node_modules/
+user/node_modules/
+
+# Python
+pythonService/venv/
+pythonService/__pycache__/
+pythonService/*.pyc
+
+# ChromaDB
+pythonService/chromadb/
+
+# Uploaded PDFs
+server/upload/
+
+server/.env

@@ -1,0 +1,399 @@
+{
+  "questions": {
+    "problemDescription": "Please describe the problem you are facing.",
+    "location": "Where is the issue located? Provide the address or locality. If possible, share the location using the map.",
+    "issueType": "What is the specific type of issue?",
+    "serviceOrScheme": "Which government service, scheme, benefit, institution, or infrastructure is involved?",
+    "relevantDateOrDuration": "When did the issue occur, or how long has it been continuing?",
+    "applicationStatus": "What is the current status of your application or service request?",
+    "evidence": "Do you have any supporting photos, videos, documents, or other evidence you would like to upload?",
+    "riskOrUrgency": "Is there any safety, health, access, or other urgent risk? Is immediate assistance required?",
+    "impact": "How has this issue affected you or other people?",
+    "desiredResolution": "What action or resolution would you like the responsible authority to provide?",
+    "affectedPeople": "How many people, households, students, or other users are affected? If you do not know the exact number, provide an estimate or description."
+  },
+  "categories": {
+    "Administrative Processes": {
+      "authorityType": "Government office or department responsible for the administrative service.",
+      "subcategories": {
+        "Applying for a birth/death certificate": {
+          "requiredFields": [
+            "problemDescription",
+            "location",
+            "issueType",
+            "serviceOrScheme",
+            "relevantDateOrDuration",
+            "applicationStatus",
+            "impact",
+            "desiredResolution"
+          ]
+        },
+        "Obtaining a domicile or income certificate": {
+          "requiredFields": [
+            "problemDescription",
+            "location",
+            "issueType",
+            "serviceOrScheme",
+            "relevantDateOrDuration",
+            "applicationStatus",
+            "impact",
+            "desiredResolution"
+          ]
+        },
+        "Applying for a driving licence": {
+          "requiredFields": [
+            "problemDescription",
+            "location",
+            "issueType",
+            "serviceOrScheme",
+            "relevantDateOrDuration",
+            "applicationStatus",
+            "impact",
+            "desiredResolution"
+          ]
+        },
+        "Passport-related government processes": {
+          "requiredFields": [
+            "problemDescription",
+            "location",
+            "issueType",
+            "serviceOrScheme",
+            "relevantDateOrDuration",
+            "applicationStatus",
+            "impact",
+            "desiredResolution"
+          ]
+        },
+        "Land/property records": {
+          "requiredFields": [
+            "problemDescription",
+            "location",
+            "issueType",
+            "serviceOrScheme",
+            "relevantDateOrDuration",
+            "applicationStatus",
+            "impact",
+            "desiredResolution"
+          ]
+        }
+      }
+    },
+    "Welfare Schemes": {
+      "authorityType": "Government department or scheme-administering authority responsible for the benefit.",
+      "subcategories": {
+        "Scholarships": {
+          "requiredFields": [
+            "problemDescription",
+            "issueType",
+            "serviceOrScheme",
+            "relevantDateOrDuration",
+            "applicationStatus",
+            "impact",
+            "desiredResolution"
+          ]
+        },
+        "Pension schemes": {
+          "requiredFields": [
+            "problemDescription",
+            "issueType",
+            "serviceOrScheme",
+            "relevantDateOrDuration",
+            "applicationStatus",
+            "impact",
+            "desiredResolution"
+          ]
+        },
+        "Subsidies": {
+          "requiredFields": [
+            "problemDescription",
+            "issueType",
+            "serviceOrScheme",
+            "relevantDateOrDuration",
+            "applicationStatus",
+            "impact",
+            "desiredResolution"
+          ]
+        },
+        "Food/ration benefits": {
+          "requiredFields": [
+            "problemDescription",
+            "location",
+            "issueType",
+            "serviceOrScheme",
+            "relevantDateOrDuration",
+            "affectedPeople",
+            "impact",
+            "desiredResolution"
+          ]
+        },
+        "Housing assistance": {
+          "requiredFields": [
+            "problemDescription",
+            "location",
+            "issueType",
+            "serviceOrScheme",
+            "relevantDateOrDuration",
+            "applicationStatus",
+            "impact",
+            "desiredResolution"
+          ]
+        },
+        "Employment-related schemes": {
+          "requiredFields": [
+            "problemDescription",
+            "issueType",
+            "serviceOrScheme",
+            "relevantDateOrDuration",
+            "applicationStatus",
+            "impact",
+            "desiredResolution"
+          ]
+        },
+        "Financial assistance for eligible families": {
+          "requiredFields": [
+            "problemDescription",
+            "issueType",
+            "serviceOrScheme",
+            "relevantDateOrDuration",
+            "applicationStatus",
+            "affectedPeople",
+            "impact",
+            "desiredResolution"
+          ]
+        }
+      }
+    },
+    "Public Infrastructure": {
+      "authorityType": "Local government body or public works department responsible for the infrastructure.",
+      "subcategories": {
+        "Roads and potholes": {
+          "requiredFields": [
+            "problemDescription",
+            "location",
+            "issueType",
+            "relevantDateOrDuration",
+            "riskOrUrgency",
+            "impact",
+            "desiredResolution",
+            "evidence"
+          ]
+        },
+        "Streetlights": {
+          "requiredFields": [
+            "problemDescription",
+            "location",
+            "issueType",
+            "relevantDateOrDuration",
+            "riskOrUrgency",
+            "impact",
+            "desiredResolution"
+          ]
+        },
+        "Drainage systems": {
+          "requiredFields": [
+            "problemDescription",
+            "location",
+            "issueType",
+            "relevantDateOrDuration",
+            "riskOrUrgency",
+            "impact",
+            "desiredResolution"
+          ]
+        },
+        "Water supply": {
+          "requiredFields": [
+            "problemDescription",
+            "location",
+            "issueType",
+            "relevantDateOrDuration",
+            "affectedPeople",
+            "impact",
+            "desiredResolution"
+          ]
+        },
+        "Public toilets": {
+          "requiredFields": [
+            "problemDescription",
+            "location",
+            "issueType",
+            "relevantDateOrDuration",
+            "riskOrUrgency",
+            "impact",
+            "desiredResolution"
+          ]
+        },
+        "Bridges": {
+          "requiredFields": [
+            "problemDescription",
+            "location",
+            "issueType",
+            "relevantDateOrDuration",
+            "riskOrUrgency",
+            "impact",
+            "desiredResolution"
+          ]
+        },
+        "Footpaths": {
+          "requiredFields": [
+            "problemDescription",
+            "location",
+            "issueType",
+            "relevantDateOrDuration",
+            "riskOrUrgency",
+            "impact",
+            "desiredResolution"
+          ]
+        },
+        "Government buildings": {
+          "requiredFields": [
+            "problemDescription",
+            "location",
+            "issueType",
+            "serviceOrScheme",
+            "relevantDateOrDuration",
+            "riskOrUrgency",
+            "impact",
+            "desiredResolution"
+          ]
+        },
+        "Public transportation infrastructure": {
+          "requiredFields": [
+            "problemDescription",
+            "location",
+            "issueType",
+            "serviceOrScheme",
+            "relevantDateOrDuration",
+            "impact",
+            "desiredResolution"
+          ]
+        }
+      }
+    },
+    "Education": {
+      "authorityType": "Government education department or authority responsible for the institution.",
+      "subcategories": {
+        "Problems in government schools or colleges": {
+          "requiredFields": [
+            "problemDescription",
+            "location",
+            "issueType",
+            "serviceOrScheme",
+            "relevantDateOrDuration",
+            "affectedPeople",
+            "impact",
+            "desiredResolution"
+          ]
+        },
+        "Lack of basic facilities": {
+          "requiredFields": [
+            "problemDescription",
+            "location",
+            "issueType",
+            "serviceOrScheme",
+            "relevantDateOrDuration",
+            "affectedPeople",
+            "impact",
+            "desiredResolution"
+          ]
+        },
+        "Teacher/staff-related issues": {
+          "requiredFields": [
+            "problemDescription",
+            "location",
+            "issueType",
+            "serviceOrScheme",
+            "relevantDateOrDuration",
+            "impact",
+            "desiredResolution"
+          ]
+        },
+        "Scholarship-related problems": {
+          "requiredFields": [
+            "problemDescription",
+            "location",
+            "issueType",
+            "serviceOrScheme",
+            "relevantDateOrDuration",
+            "applicationStatus",
+            "impact",
+            "desiredResolution"
+          ]
+        },
+        "Delays in educational certificates": {
+          "requiredFields": [
+            "problemDescription",
+            "location",
+            "issueType",
+            "serviceOrScheme",
+            "relevantDateOrDuration",
+            "applicationStatus",
+            "impact",
+            "desiredResolution"
+          ]
+        }
+      }
+    },
+    "Public Safety": {
+      "authorityType": "Relevant local safety, infrastructure, or emergency-response authority.",
+      "subcategories": {
+        "Unsafe roads or public areas": {
+          "requiredFields": [
+            "problemDescription",
+            "location",
+            "issueType",
+            "relevantDateOrDuration",
+            "riskOrUrgency",
+            "impact",
+            "desiredResolution"
+          ]
+        },
+        "Missing or damaged safety infrastructure": {
+          "requiredFields": [
+            "problemDescription",
+            "location",
+            "issueType",
+            "relevantDateOrDuration",
+            "riskOrUrgency",
+            "impact",
+            "desiredResolution"
+          ]
+        },
+        "Streetlights in areas where darkness creates safety concerns": {
+          "requiredFields": [
+            "problemDescription",
+            "location",
+            "issueType",
+            "relevantDateOrDuration",
+            "riskOrUrgency",
+            "impact",
+            "desiredResolution"
+          ]
+        },
+        "Dangerous public infrastructure": {
+          "requiredFields": [
+            "problemDescription",
+            "location",
+            "issueType",
+            "relevantDateOrDuration",
+            "riskOrUrgency",
+            "impact",
+            "desiredResolution"
+          ]
+        },
+        "Emergency-response issues": {
+          "requiredFields": [
+            "problemDescription",
+            "location",
+            "issueType",
+            "serviceOrScheme",
+            "relevantDateOrDuration",
+            "applicationStatus",
+            "riskOrUrgency",
+            "impact",
+            "desiredResolution"
+          ]
+        }
+      }
+    }
+  }
+}
