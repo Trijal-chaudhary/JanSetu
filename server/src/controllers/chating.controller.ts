@@ -152,7 +152,58 @@ export const collectingInfo = async (req: Request, res: Response) => {
     - Do not assume an answer when the citizen has not provided it.
     - Be neutral, respectful, and concise.
     - Use simple language that citizens can easily understand.
-    
+    9.5. AI QUERY TYPE
+
+- aiQueryType describes the type of information that the
+  assistantMessage is currently asking the citizen to provide.
+
+- Use "location" when the assistantMessage asks the citizen for
+  any information related to the location of the reported issue.
+
+- This includes asking for:
+  - exact address
+  - specific place
+  - road or street name
+  - nearby landmark
+  - area or locality
+  - map location
+  - GPS location
+  - latitude or longitude
+  - confirmation of the reported location
+
+- Use "evidence" when the assistantMessage asks the citizen to
+  provide or upload evidence such as:
+  - photo
+  - video
+  - document
+  - screenshot
+  - other supporting evidence
+
+- Use "general" for all other information requests that are not
+  related to location or evidence.
+
+- The aiQueryType MUST correspond to what the assistantMessage
+  is actually asking the citizen for.
+
+Examples:
+
+If assistantMessage is:
+"कृपया इस गड्ढे का सटीक पता या स्थान बताइए।"
+
+aiQueryType must be:
+"location"
+
+If assistantMessage is:
+"कृपया समस्या की एक फोटो अपलोड करें।"
+
+aiQueryType must be:
+"evidence"
+
+If assistantMessage is:
+"यह समस्या कब से है?"
+
+aiQueryType must be:
+"general"
     10. OUTPUT FORMAT
     Return a valid JSON object with the following structure:
     
@@ -165,7 +216,31 @@ export const collectingInfo = async (req: Request, res: Response) => {
       "isComplete": false,
       "aiQueryType": general/location/evidence
     }
-    
+    10.5. ASSISTANT MESSAGE LANGUAGE
+
+- The assistantMessage is the only part of the response that should
+  follow the language used by the citizen.
+- Identify the language of the latest citizen message provided at
+  the end of this prompt under "Latest citizen message".
+- Write assistantMessage in the same language as that latest citizen
+  message.
+- If the latest citizen message is in Hindi, write assistantMessage
+  in Hindi.
+- If the latest citizen message is in English, write assistantMessage
+  in English.
+- If the latest citizen message is in Hinglish or contains a natural
+  mixture of Hindi and English, respond naturally in the same style.
+- Use the latest citizen message as the primary source for determining
+  the response language, even if previous messages used a different
+  language.
+- Do not translate assistantMessage into English unless the latest
+  citizen message is in English.
+
+- This language rule applies ONLY to assistantMessage.
+- All fields inside reportDraft must remain in clear, natural English.
+- missingRequiredFields must contain the original field names defined
+  by the backend.
+- aiQueryType must remain unchanged.
     11. FAITHFUL EXTRACTION AND ENGLISH OUTPUT
 
     - The citizen's latest message is the source of truth.
@@ -268,7 +343,7 @@ export const collectingInfo = async (req: Request, res: Response) => {
     ${req.body.data}
     `;
     const completion = await groq.chat.completions.create({
-      model: "openai/gpt-oss-120b",
+      model: "openai/gpt-oss-20b",
       messages: [
         {
           role: "system",

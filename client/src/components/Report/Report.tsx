@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import styles from "./Report.module.css";
 import { givingInfo, uploadingEvidence } from "../../services/fetching";
 import LocationCard from "../locationcard/LocationCard";
@@ -6,6 +6,9 @@ import Evidence from "../evidence/Evidence";
 import ReportProgress from "../ReportProgress/ReportProgress";
 import Classfication from "../Classfication/Classfication";
 import ReportDetails from "../../pages/DIsplayinfo/ReportDetails";
+import SpeechRecognition, {
+  useSpeechRecognition,
+} from "react-speech-recognition";
 
 type MessageRole = "user" | "assistant";
 
@@ -61,6 +64,19 @@ const Report: React.FC = () => {
       type: "text",
     },
   ]);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [speakingMessage, setSpeakingMessage] = useState<number | null>(null);
+  const speakMessage = (message: string) => {
+    window.speechSynthesis.cancel();
+
+    const speech = new SpeechSynthesisUtterance(message);
+
+    speech.lang = /[\u0900-\u097F]/.test(message) ? "hi-IN" : "en-IN";
+
+    speech.rate = 0.8;
+
+    window.speechSynthesis.speak(speech);
+  };
   const handelReplys = async () => {
     console.log(question);
     setMessage((prev) => [
@@ -76,6 +92,7 @@ const Report: React.FC = () => {
     const response = await givingInfo(question, messages);
     setIsThinking(false);
     const res = response.result;
+    speakMessage(res.assistantMessage);
     // console.log(res.assistantMessage);
     if (res.isComplete) setDone(true);
     setReportDraft((prev) => ({
@@ -94,6 +111,7 @@ const Report: React.FC = () => {
     console.log(res);
     setQuestion("");
   };
+
   const handelLocation = async (location: {
     address: string | null;
     latitude: number;
@@ -118,7 +136,9 @@ const Report: React.FC = () => {
     setIsThinking(true);
     const response = await givingInfo(locationMessage, messages);
     setIsThinking(false);
+
     const res = response.result;
+    speakMessage(res.assistantMessage);
     if (res.isComplete) setDone(true);
 
     setReportDraft((prev) => ({
@@ -155,6 +175,7 @@ const Report: React.FC = () => {
 
     const resp = await givingInfo(uploaded, messages);
     const re = resp.result;
+    speakMessage(re.assistantMessage);
     setIsThinking(false);
     setReportDraft((prev) => ({
       ...prev,
@@ -173,6 +194,19 @@ const Report: React.FC = () => {
     ]);
     console.log("Evidence selected:", evidence);
   };
+  const {
+    transcript,
+    listening,
+    resetTranscript,
+    browserSupportsSpeechRecognition,
+  } = useSpeechRecognition();
+
+  if (!browserSupportsSpeechRecognition) {
+    return <span>Browser doesn't support speech recognition.</span>;
+  }
+  useEffect(() => {
+    setQuestion(transcript);
+  }, [transcript]);
   return (
     <>
       {done && <ReportDetails reportDraft={reportDraft} />}
@@ -236,6 +270,20 @@ const Report: React.FC = () => {
                       }
                     >
                       <p>{message.text}</p>
+
+                      {message.role === "assistant" && (
+                        <div className={styles.ttsBar}>
+                          <button
+                            onClick={() => speakMessage(message.text)}
+                            className={styles.ttsPlayButton}
+                            aria-label="Play message"
+                          >
+                            ▶
+                          </button>
+
+                          <span>Listen to response</span>
+                        </div>
+                      )}
                       {message.type === "location" ? (
                         <LocationCard onLocationFetch={handelLocation} />
                       ) : (
@@ -283,9 +331,30 @@ const Report: React.FC = () => {
                   onChange={(e) => setQuestion(e.target.value)}
                 />
 
-                <button className={styles.micButton} aria-label="Voice input">
-                  🎙
-                </button>
+                {listening ? (
+                  <button
+                    onClick={SpeechRecognition.stopListening}
+                    className={styles.micButton}
+                    aria-label="Stop voice input"
+                  >
+                    ⏹️
+                  </button>
+                ) : (
+                  <button
+                    onClick={() =>
+                      SpeechRecognition.startListening({
+                        continuous: true,
+                        language: "en-IN",
+                      })
+                    }
+                    className={`${styles.micButton} ${
+                      listening ? styles.micActive : ""
+                    }`}
+                    aria-label="Start voice input"
+                  >
+                    🎙
+                  </button>
+                )}
 
                 <button
                   className={styles.sendButton}
@@ -297,9 +366,13 @@ const Report: React.FC = () => {
               </div>
 
               <div className={styles.inputHint}>
-                <span>🎙 You can also speak in your preferred language</span>
+                <span>
+                  {listening
+                    ? "🎙 Listening..."
+                    : "🎙 You can also speak in your preferred language"}
+                </span>
 
-                <span>JanVoice AI</span>
+                <span>MargDarshak AI</span>
               </div>
             </footer>
           </section>
