@@ -64,8 +64,6 @@ const Report: React.FC = () => {
       type: "text",
     },
   ]);
-  const [isSpeaking, setIsSpeaking] = useState(false);
-  const [speakingMessage, setSpeakingMessage] = useState<number | null>(null);
   const speakMessage = (message: string) => {
     window.speechSynthesis.cancel();
 

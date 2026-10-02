@@ -30,336 +30,240 @@ let initialReportDraft: ReportDraft = {
 
 export const collectingInfo = async (req: Request, res: Response) => {
   try {
-    const history = (req.body.messages ?? []).map((message: any) => ({
-      role: message.role,
-      content: message.content ?? message.text,
-    }));
-    const systemPrompt = `
-    You are the AI assistant for a Citizen Voice and Accountability
-    Intelligence Platform in India.
-    
-    Your responsibility is to help citizens prepare accurate,
-    complete, and clear civic grievance reports.
-    
-    You must follow the instructions below strictly.
-    
-    1. CATEGORY AND SUBCATEGORY
-    - Identify the grievance category and subcategory from the
-      citizen's message and existing report draft.
-    - Use only categories and subcategories available in the
-      requiredInfo JSON.
-    - If the category or subcategory is unclear, ask the citizen
-      to clarify it before collecting category-specific information.
-    - Never invent a category or subcategory.
-    
-    2. REQUIRED INFORMATION
-    - The requiredInfo JSON supplied by the backend is the
-      authoritative source for determining which fields are
-      required for the selected category and subcategory.
-    - First, locate the selected category and subcategory in
-      requiredInfo.
-    - Read the corresponding requiredFields array.
-    - Use the questions dictionary in requiredInfo to understand
-      how to ask about each field.
-    - The prompt contains the meanings and instructions for
-      interpreting each field. Follow those instructions.
-    - Do not ask questions for fields that are not required for
-      the selected category and subcategory.
-    
-    3. CURRENT REPORT DRAFT
-    - Use the current report draft and conversation history to
-      determine which information has already been collected.
-    - Do not ask the citizen to repeat information that is already
-      available and sufficiently clear.
-    - If a required field already contains a valid answer, consider
-      it collected.
-    - If a required field is missing, null, incomplete, or unclear,
-      ask a suitable follow-up question.
-    - Extract relevant information from the citizen's latest
-      message and update the report draft.
-    - Do not overwrite a valid existing value with null or an
-      unsupported assumption.
-    
-    4. NOT-REQUIRED FIELDS
-    - For every field in the ReportDraft that is not included in
-      the requiredFields array for the selected category and
-      subcategory, set its value to the exact string "notrequired".
-    - Do not ask the citizen questions about those fields.
-    - Do not treat "notrequired" as missing information.
-    - Never set a field to "notrequired" if that field is required
-      for the selected category and subcategory.
-    - Category and subcategory must remain valid selected values,
-      not "notrequired".
-    - Do not mark a required field as "notrequired" simply because
-      the citizen does not know the answer.
-    
-  5. LOCATION
-- The location field contains address, latitude, and longitude.
-- The address, latitude, and longitude are all mandatory fields
-  for a complete location.
-- A location is considered collected only when address,
-  latitude, and longitude all contain valid, meaningful values.
-- Never consider the location complete if any of these three
-  values is null, missing, empty, or invalid.
-- Extract the address if the citizen provides it.
-- Never invent latitude or longitude.
-- Coordinates must be obtained from a reliable source such
-  as GPS or a map selection.
-- If coordinates are unavailable, keep them null.
-- Do not claim that coordinates have been verified unless
-  they have actually been verified by the application.
-- If the address is unavailable, keep it null and ask the
-  citizen to provide or confirm the address.
-- Do not mark the location as complete until all three
-  components are available.
-    6. EVIDENCE
-    - Collect evidence information only when it is relevant to
-      the report or requested by the application.
-    - Never invent photos, documents, videos, URLs, or evidence.
-    - Do not claim that evidence has been uploaded unless the
-      application confirms the upload.
-    - If evidence is not required for the selected grievance,
-      set the field to "notrequired".
-    
-    7. FOLLOW-UP QUESTIONS
-    - Ask exactly one follow-up question at a time.
-    - Ask about the next missing required field.
-    - Make the question clear, polite, concise, and easy to
-      understand.
-    - If the citizen's answer is ambiguous, ask for clarification.
-    - Do not ask multiple questions in a single message.
-    - Do not ask for unnecessary personal or sensitive information.
-    
-    8. COMPLETION
-    - Determine completion by checking every field in the
-      requiredFields array against the current report draft.
-    - A required field is collected only when it contains a
-      meaningful, sufficiently clear answer.
-    - Null, empty strings, and "notrequired" do not count as
-      collected answers for required fields.
-    - If any required field is missing, ask a follow-up question
-      about one of the missing fields.
-    - If all required fields have been collected, provide a concise
-      summary of the grievance and ask the citizen to review it.
-    - Do not claim that the grievance has been submitted.
-    - Do not submit or save the grievance on the citizen's behalf.
-      The application will handle submission after confirmation.
-    
-    9. ACCURACY AND RESPONSE STYLE
-    - Never invent facts, dates, locations, coordinates, offices,
-      departments, application statuses, impacts, or resolutions.
-    - Do not make up government procedures or guarantees.
-    - Do not assume an answer when the citizen has not provided it.
-    - Be neutral, respectful, and concise.
-    - Use simple language that citizens can easily understand.
-    9.5. AI QUERY TYPE
+    /*
+    |--------------------------------------------------------------------------
+    | 1. GET LATEST CITIZEN MESSAGE
+    |--------------------------------------------------------------------------
+    */
 
-- aiQueryType describes the type of information that the
-  assistantMessage is currently asking the citizen to provide.
+    const latestCitizenMessage =
+      typeof req.body.data === "string" ? req.body.data.trim() : "";
 
-- Use "location" when the assistantMessage asks the citizen for
-  any information related to the location of the reported issue.
-
-- This includes asking for:
-  - exact address
-  - specific place
-  - road or street name
-  - nearby landmark
-  - area or locality
-  - map location
-  - GPS location
-  - latitude or longitude
-  - confirmation of the reported location
-
-- Use "evidence" when the assistantMessage asks the citizen to
-  provide or upload evidence such as:
-  - photo
-  - video
-  - document
-  - screenshot
-  - other supporting evidence
-
-- Use "general" for all other information requests that are not
-  related to location or evidence.
-
-- The aiQueryType MUST correspond to what the assistantMessage
-  is actually asking the citizen for.
-
-Examples:
-
-If assistantMessage is:
-"कृपया इस गड्ढे का सटीक पता या स्थान बताइए।"
-
-aiQueryType must be:
-"location"
-
-If assistantMessage is:
-"कृपया समस्या की एक फोटो अपलोड करें।"
-
-aiQueryType must be:
-"evidence"
-
-If assistantMessage is:
-"यह समस्या कब से है?"
-
-aiQueryType must be:
-"general"
-    10. OUTPUT FORMAT
-    Return a valid JSON object with the following structure:
-    
-    {
-      "assistantMessage": "The message to display to the citizen",
-      "reportDraft": {
-        // The complete updated ReportDraft
-      },
-      "missingRequiredFields": [],
-      "isComplete": false,
-      "aiQueryType": general/location/evidence
+    if (!latestCitizenMessage) {
+      return res.status(400).json({
+        success: false,
+        message: "Citizen message is required.",
+      });
     }
-    10.5. ASSISTANT MESSAGE LANGUAGE
 
-- The assistantMessage is the only part of the response that should
-  follow the language used by the citizen.
-- Identify the language of the latest citizen message provided at
-  the end of this prompt under "Latest citizen message".
-- Write assistantMessage in the same language as that latest citizen
-  message.
-- If the latest citizen message is in Hindi, write assistantMessage
-  in Hindi.
-- If the latest citizen message is in English, write assistantMessage
-  in English.
-- If the latest citizen message is in Hinglish or contains a natural
-  mixture of Hindi and English, respond naturally in the same style.
-- Use the latest citizen message as the primary source for determining
-  the response language, even if previous messages used a different
-  language.
-- Do not translate assistantMessage into English unless the latest
-  citizen message is in English.
+    /*
+    |--------------------------------------------------------------------------
+    | 2. GET CURRENT CATEGORY + SUBCATEGORY
+    |--------------------------------------------------------------------------
+    */
 
-- This language rule applies ONLY to assistantMessage.
-- All fields inside reportDraft must remain in clear, natural English.
-- missingRequiredFields must contain the original field names defined
-  by the backend.
-- aiQueryType must remain unchanged.
-    11. FAITHFUL EXTRACTION AND ENGLISH OUTPUT
+    const currentCategory = initialReportDraft.category;
 
-    - The citizen's latest message is the source of truth.
-    - Extract only facts explicitly provided by the citizen or
-      already supported by the current report draft.
-    - Never add assumptions, explanations, risks, impacts,
-      urgency levels, dates, locations, or other details that
-      the citizen did not provide.
-    - Do not expand a short complaint into a detailed narrative
-      containing additional facts.
-    - Translate the citizen's statements into clear, natural
-      English before storing them in reportDraft.
-    - Preserve the original meaning, facts, and level of certainty.
-    - Do not add information merely because it seems likely or
-      commonly associated with that type of grievance.
-    - If the citizen says only that there is a pothole outside
-      their college, do not assume it is large, dangerous,
-      difficult to see, or causing accidents.
-    - Do not infer riskOrUrgency from the type of complaint.
-    - Do not infer impact unless the citizen describes an impact.
-    - Do not infer desiredResolution unless the citizen states
-      what they want to happen.
-    - If a field has not been answered, keep it null when it is
-      required. Do not invent an answer to complete the report.
-    - If a field is not required, follow the application's
-      not-required field handling rules.
+    const currentSubcategory = initialReportDraft.subcategory;
 
-      
-    PROBLEM DESCRIPTION: CONTINUOUS UPDATES
+    /*
+    |--------------------------------------------------------------------------
+    | 3. GET ONLY RELEVANT REQUIRED FIELDS
+    |--------------------------------------------------------------------------
+    |
+    | We do NOT send the complete reqInfo.json to Groq.
+    |
+    | If category + subcategory are already known,
+    | get only their requiredFields.
+    |--------------------------------------------------------------------------
+    */
 
-    - Treat problemDescription as a continuously updatable summary
-      of the citizen's grievance.
-    - Whenever the citizen provides new information that is
-      relevant to the reported problem, update problemDescription
-      to incorporate that information.
-    - This applies to relevant information provided in any
-      subsequent message, not just the first message.
-    - Merge newly provided facts with the existing description
-      while preserving all previously provided relevant facts.
-    - Do not discard previously collected information unless
-      the citizen explicitly corrects it, retracts it, or replaces
-      it with newer information.
-    - If the citizen corrects a previously stated fact, update
-      the description to reflect the correction.
-    - Keep the updated description concise, coherent, and in
-      natural English, even when the citizen communicates in
-      another language.
-    - Do not add assumptions, interpretations, or details that
-      the citizen has not provided.
-    - If the latest message does not contain information relevant
-      to the problem description, leave the existing description
-      unchanged.
+    let requiredFields: string[] = [];
 
-    Output requirements:
-    - Return JSON only. Do not include Markdown code fences.
-    - Include every field in ReportDraft.
-    - Preserve the defined structure of the location object.
-    - Keep evidence in the defined EvidenceItem[] format.
-    - Use the exact string "notrequired" for fields that are not
-      required for the selected category and subcategory.
-    - missingRequiredFields must contain only required fields
-      that still need information.
-    - isComplete must be true only when every required field
-      has been collected.
-    - The backend will independently validate the returned data
-      and determine whether the report is complete.
-    
-    STRICT FACTUAL EXTRACTION FOR problemDescription
+    if (currentCategory && currentSubcategory) {
+      requiredFields =
+        (requiredInfo as any).categories?.[currentCategory]?.subcategories?.[
+          currentSubcategory
+        ]?.requiredFields ?? [];
+    }
 
-    - problemDescription must contain ONLY facts explicitly stated
-      by the citizen in the conversation.
-    - Before adding any detail, verify that the citizen actually
-      stated it in a message.
-    - Do not add adjectives such as "large", "dangerous", "severe",
-      "deep", or "damaged" unless explicitly stated by the citizen.
-    - Do not infer visibility, risk, urgency, severity, duration,
-      impact, or consequences from the complaint category.
-    - Do not convert a possible consequence into an established fact.
-    - If the citizen says "There is a pothole outside my college",
-      the description must not mention its size, visibility, or risk.
-    - When updating the description, combine only verified facts
-      from the existing draft and the conversation history.
-    - If a detail in the existing draft cannot be supported by the
-      conversation history, remove that detail.
-    - Translate the citizen's statements into English while
-      preserving their exact meaning.
-    - If no new relevant information is provided, keep the existing
-      verified description unchanged.
+    /*
+    |--------------------------------------------------------------------------
+    | 4. IF CATEGORY/SUBCATEGORY ARE NOT KNOWN
+    |--------------------------------------------------------------------------
+    |
+    | Only send category + subcategory names.
+    | Don't send the complete requiredInfo JSON.
+    |--------------------------------------------------------------------------
+    */
 
-    Current report draft:
-    ${JSON.stringify(initialReportDraft, null, 2)}
-    
-    Required information configuration:
-    ${JSON.stringify(requiredInfo, null, 2)}
-    
-    Conversation history:
-    ${JSON.stringify(req.body.messages, null, 2)}
-    
-    Latest citizen message:
-    ${req.body.data}
-    `;
+    let categoryOptions: any = null;
+
+    if (!currentCategory || !currentSubcategory) {
+      categoryOptions = Object.entries((requiredInfo as any).categories).map(
+        ([category, data]: any) => ({
+          category,
+          subcategories: Object.keys(data.subcategories),
+        })
+      );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | 5. SMALL SYSTEM PROMPT
+    |--------------------------------------------------------------------------
+    */
+
+    const systemPrompt = `
+You are the AI assistant for a Citizen Voice and Accountability
+Intelligence Platform in India.
+
+Your job is to collect information from the citizen and maintain
+the grievance report.
+
+IMPORTANT RULES:
+
+1. Ask exactly ONE follow-up question at a time.
+
+2. Extract only facts explicitly provided by the citizen.
+Never invent information.
+
+3. Use the current report draft to know what information has
+already been collected.
+
+4. Do not ask for information that is already available.
+
+5. Only ask about fields listed in requiredFields.
+
+6. reportDraft values must be written in clear English.
+
+7. assistantMessage must use the same language/style as the
+latest citizen message.
+
+8. If the latest citizen message is Hindi, respond in Hindi.
+
+9. If the latest citizen message is English, respond in English.
+
+10. If the latest citizen message is Hinglish/mixed, respond
+naturally in Hinglish/mixed style.
+
+11. Never invent latitude or longitude.
+
+12. Location is complete only when address, latitude and longitude
+are all available.
+
+13. Never invent evidence.
+
+14. Do not infer risk, urgency, impact, duration, severity,
+application status, or desired resolution.
+
+15. problemDescription must contain only facts provided by
+the citizen. If new relevant facts are provided, update it.
+
+16. If multiple pieces of information are provided in one message,
+extract all of them, but ask only ONE next question.
+
+17. If all required information is collected, provide a concise
+summary and ask the citizen to review it.
+
+18. Do not claim that the grievance has been submitted.
+
+ASSISTANT MESSAGE LANGUAGE RULE
+- Only assistantMessage should follow the language of the latest citizen message.
+- If the citizen asks in Hindi, generate assistantMessage in Hindi using Devanagari script only.
+- If the citizen asks in Hinglish, understand the meaning but generate assistantMessage in Hindi using Devanagari script only.
+- If the citizen asks in English, generate assistantMessage in English.
+- All other output fields (reportDraft, missingRequiredFields, aiQueryType, isComplete, etc.) must always remain in English.
+- Do not translate field names or JSON keys.
+
+AI QUERY TYPE:
+
+Use "location" when asking for:
+- address
+- locality
+- road/street
+- landmark
+- map location
+- GPS
+- latitude/longitude
+- location confirmation
+
+Use "evidence" when asking for:
+- photo
+- video
+- document
+- screenshot
+- supporting evidence
+
+Use "general" for all other questions.
+
+Return ONLY valid JSON:
+
+{
+  "assistantMessage": "",
+  "reportDraft": {},
+  "missingRequiredFields": [],
+  "isComplete": false,
+  "aiQueryType": "general"
+}
+`;
+
+    /*
+    |--------------------------------------------------------------------------
+    | 6. BUILD SMALL CONTEXT FOR GROQ
+    |--------------------------------------------------------------------------
+    |
+    | We send:
+    |
+    | - current draft
+    | - relevant required fields
+    | - category options ONLY when necessary
+    | - latest citizen message
+    |
+    | We DO NOT send:
+    |
+    | - complete reqInfo.json
+    | - complete conversation history
+    |--------------------------------------------------------------------------
+    */
+
+    const contextForAI: any = {
+      currentReportDraft: initialReportDraft,
+
+      requiredFields,
+
+      latestCitizenMessage,
+    };
+
+    if (categoryOptions) {
+      contextForAI.categoryOptions = categoryOptions;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | 7. CALL GROQ
+    |--------------------------------------------------------------------------
+    */
+
     const completion = await groq.chat.completions.create({
-      model: "openai/gpt-oss-20b",
+      model: "openai/gpt-oss-120b",
+
       messages: [
         {
           role: "system",
           content: systemPrompt,
         },
-        ...history,
         {
           role: "user",
-          content: req.body.data,
+          content: JSON.stringify(contextForAI),
         },
       ],
+
       temperature: 0.2,
+
+      max_completion_tokens: 1000,
+
       response_format: {
         type: "json_object",
       },
     });
+
+    /*
+    |--------------------------------------------------------------------------
+    | 8. GET AI RESPONSE
+    |--------------------------------------------------------------------------
+    */
+
     const content = completion.choices[0]?.message?.content;
 
     if (!content) {
@@ -368,18 +272,237 @@ aiQueryType must be:
 
     const result = JSON.parse(content);
 
+    /*
+    |--------------------------------------------------------------------------
+    | 9. MERGE AI REPORT DRAFT INTO SERVER DRAFT
+    |--------------------------------------------------------------------------
+    |
+    | This is the important part:
+    |
+    | Frontend DOES NOT send reportDraft.
+    |
+    | Backend already has initialReportDraft.
+    |
+    |--------------------------------------------------------------------------
+    */
+
     initialReportDraft = {
       ...initialReportDraft,
       ...result.reportDraft,
     };
 
+    /*
+    |--------------------------------------------------------------------------
+    | 10. LOCATION MERGE
+    |--------------------------------------------------------------------------
+    |
+    | Prevent null values returned by AI from accidentally
+    | destroying existing location information.
+    |--------------------------------------------------------------------------
+    */
+
+    if (result.reportDraft?.location) {
+      initialReportDraft.location = {
+        address:
+          result.reportDraft.location.address ??
+          initialReportDraft.location?.address ??
+          null,
+
+        latitude:
+          result.reportDraft.location.latitude ??
+          initialReportDraft.location?.latitude ??
+          null,
+
+        longitude:
+          result.reportDraft.location.longitude ??
+          initialReportDraft.location?.longitude ??
+          null,
+      };
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | 11. GET FINAL CATEGORY/SUBCATEGORY
+    |--------------------------------------------------------------------------
+    */
+
+    const finalCategory = initialReportDraft.category;
+
+    const finalSubcategory = initialReportDraft.subcategory;
+
+    /*
+    |--------------------------------------------------------------------------
+    | 12. GET FINAL REQUIRED FIELDS FROM BACKEND
+    |--------------------------------------------------------------------------
+    */
+
+    let finalRequiredFields: string[] = [];
+
+    if (finalCategory && finalSubcategory) {
+      finalRequiredFields =
+        (requiredInfo as any).categories?.[finalCategory]?.subcategories?.[
+          finalSubcategory
+        ]?.requiredFields ?? [];
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | 13. SET NOT REQUIRED FIELDS,
+    |--------------------------------------------------------------------------
+    |
+    | Backend knows which fields are not required.
+    | No need to make the AI do this.
+    |--------------------------------------------------------------------------
+    */
+
+    const allFields = [
+      "problemDescription",
+      "location",
+      "issueType",
+      "serviceOrScheme",
+      "relevantDateOrDuration",
+      "applicationStatus",
+      "evidence",
+      "riskOrUrgency",
+      "impact",
+      "desiredResolution",
+    ];
+
+    for (const field of allFields) {
+      if (!finalRequiredFields.includes(field)) {
+        (initialReportDraft as any)[field] = "notrequired";
+      }
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | 14. CHECK FIELD COMPLETION
+    |--------------------------------------------------------------------------
+    */
+
+    const isFieldComplete = (field: string): boolean => {
+      /*
+      | LOCATION
+      */
+
+      if (field === "location") {
+        const location = initialReportDraft.location;
+
+        return (
+          typeof location?.address === "string" &&
+          location.address.trim() !== "" &&
+          typeof location?.latitude === "number" &&
+          Number.isFinite(location.latitude) &&
+          typeof location?.longitude === "number" &&
+          Number.isFinite(location.longitude)
+        );
+      }
+
+      /*
+      | EVIDENCE
+      */
+
+      if (field === "evidence") {
+        return (
+          Array.isArray(initialReportDraft.evidence) &&
+          initialReportDraft.evidence.length > 0
+        );
+      }
+
+      /*
+      | NORMAL FIELD
+      */
+
+      const value = (initialReportDraft as any)[field];
+
+      if (value === null || value === undefined) {
+        return false;
+      }
+
+      if (typeof value === "string") {
+        return value.trim() !== "" && value !== "notrequired";
+      }
+
+      return true;
+    };
+
+    /*
+    |--------------------------------------------------------------------------
+    | 15. CALCULATE MISSING FIELDS
+    |--------------------------------------------------------------------------
+    */
+
+    const missingRequiredFields = finalRequiredFields.filter(
+      (field) => !isFieldComplete(field)
+    );
+
+    /*
+    |--------------------------------------------------------------------------
+    | 16. CALCULATE COMPLETION
+    |--------------------------------------------------------------------------
+    */
+
+    const isComplete =
+      finalRequiredFields.length > 0 && missingRequiredFields.length === 0;
+
+    /*
+    |--------------------------------------------------------------------------
+    | 17. VALIDATE AI QUERY TYPE
+    |--------------------------------------------------------------------------
+    */
+
+    let aiQueryType = result.aiQueryType;
+
+    if (
+      aiQueryType !== "location" &&
+      aiQueryType !== "evidence" &&
+      aiQueryType !== "general"
+    ) {
+      aiQueryType = "general";
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | 18. FINAL RESULT
+    |--------------------------------------------------------------------------
+    */
+
+    const finalResult = {
+      assistantMessage: result.assistantMessage ?? "",
+
+      reportDraft: initialReportDraft,
+
+      missingRequiredFields,
+
+      isComplete,
+
+      aiQueryType,
+    };
+
+    /*
+    |--------------------------------------------------------------------------
+    | 19. RESPONSE
+    |--------------------------------------------------------------------------
+    */
+
     console.log("Updated Report Draft:", initialReportDraft);
 
-    console.log("connected", req.body.data);
-    res.status(200).json({ result });
-  } catch (error) {
-    console.log("error", error);
-    res.status(500).json({ mess: error });
+    console.log("Required Fields:", finalRequiredFields);
+
+    console.log("Missing Fields:", missingRequiredFields);
+
+    return res.status(200).json({
+      success: true,
+      result: finalResult,
+    });
+  } catch (error: any) {
+    console.error("collectingInfo error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message:
+        error?.message ?? "Something went wrong while collecting information.",
+    });
   }
 };
 

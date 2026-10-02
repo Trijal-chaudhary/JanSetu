@@ -1,4 +1,5 @@
 const bkUrl = "http://localhost:3007";
+
 export const givingInfo = async (data: any, messages: any) => {
   const response = await fetch(`${bkUrl}/api/collectingInfo`, {
     method: "POST",
@@ -9,6 +10,7 @@ export const givingInfo = async (data: any, messages: any) => {
   });
   return response.json();
 };
+
 export const uploadingEvidence = async (files: File[]) => {
   const formData = new FormData();
 
