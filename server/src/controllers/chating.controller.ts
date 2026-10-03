@@ -572,3 +572,21 @@ export const reportManual = async (req: Request, res: Response) => {
     });
   }
 };
+
+export const getReports = async (req: Request, res: Response) => {
+  try {
+    const reports = await reportDetails.find().sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      reports,
+    });
+  } catch (error) {
+    console.log(error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch reports",
+    });
+  }
+};

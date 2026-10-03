@@ -36,3 +36,9 @@ export const manualReport = async (data: any) => {
   });
   return response.json();
 };
+
+export const getReports = async () => {
+  const response = await fetch(`${bkUrl}/api/getReports`);
+
+  return response.json();
+};

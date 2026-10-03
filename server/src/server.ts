@@ -5,6 +5,7 @@ import mongoose from "mongoose";
 import cors from "cors";
 import {
   collectingInfoRouter,
+  getReportsRouter,
   reportManualRouter,
   uploadingEvedinceRouter,
 } from "./routers/user.router";
@@ -20,6 +21,7 @@ app.use(
 app.use("/api/collectingInfo", collectingInfoRouter);
 app.use("/api/uploadingEvedince", uploadingEvedinceRouter);
 app.use("/api/manual_report", reportManualRouter);
+app.use("/api/getReports", getReportsRouter);
 const PORT = 3007;
 // const DB_URL : string = process.env.DB_URL;
 const DB_URL = process.env.DB_URL;
