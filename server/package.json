@@ -14,11 +14,14 @@
   "license": "ISC",
   "dependencies": {
     "@types/cors": "^2.8.19",
+    "@types/mongoose": "^5.11.96",
     "@types/multer": "^2.2.0",
     "cors": "^2.8.6",
     "dotenv": "^18.0.3",
     "express": "^5.2.1",
     "groq-sdk": "^1.6.0",
+    "mongodb-client": "^0.0.1",
+    "mongoose": "^9.10.4",
     "multer": "^2.4.0"
   },
   "devDependencies": {

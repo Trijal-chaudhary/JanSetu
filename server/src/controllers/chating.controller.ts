@@ -3,6 +3,7 @@ import requiredInfo from "../data/reqInfo.json";
 import { ReportDraft } from "../repository/set";
 import groq from "../config/groq.config";
 import { upload } from "../config/multer.config";
+import reportDetails from "../model/report";
 
 let initialReportDraft: ReportDraft = {
   category: null,
@@ -553,9 +554,15 @@ export const uploadingEvedince = (req: Request, res: Response) => {
   }
 };
 
-export const reportManual = (req: Request, res: Response) => {
+export const reportManual = async (req: Request, res: Response) => {
   try {
-    console.log(req.body);
+    // console.log(req.body);
+    const form = req.body.data;
+    // const reportdetails = reportDetails
+    const report = new reportDetails(form);
+
+    await report.save();
+    console.log(form);
     res.status(200).json({ success: true, message: "connected" });
   } catch (error) {
     console.log(error);
