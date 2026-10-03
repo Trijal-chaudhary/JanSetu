@@ -4,6 +4,7 @@ import express from "express";
 import cors from "cors";
 import {
   collectingInfoRouter,
+  reportManualRouter,
   uploadingEvedinceRouter,
 } from "./routers/user.router";
 
@@ -17,6 +18,7 @@ app.use(
 );
 app.use("/api/collectingInfo", collectingInfoRouter);
 app.use("/api/uploadingEvedince", uploadingEvedinceRouter);
+app.use("/api/manual_report", reportManualRouter);
 const PORT = 3007;
 app.listen(PORT, () => {
   console.log(`http://localhost/${PORT}`);

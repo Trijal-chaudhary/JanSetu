@@ -25,3 +25,14 @@ export const uploadingEvidence = async (files: File[]) => {
 
   return response.json();
 };
+
+export const manualReport = async (data: any) => {
+  const response = await fetch(`${bkUrl}/api/manual_report`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ data }),
+  });
+  return response.json();
+};

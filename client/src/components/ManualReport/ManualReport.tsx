@@ -14,7 +14,7 @@ interface RequiredInfo {
 import styles from "./ManualReport.module.css";
 
 import requiredInfoJson from "../../data/reqInfo.json";
-import { uploadingEvidence } from "../../services/fetching";
+import { manualReport, uploadingEvidence } from "../../services/fetching";
 const requiredInfo = requiredInfoJson as RequiredInfo;
 
 interface LocationDetails {
@@ -209,7 +209,7 @@ export default function ManualReport() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     console.log("Manual Report:", form);
@@ -222,6 +222,7 @@ export default function ManualReport() {
       3. Send final report to backend
       4. Show confirmation
     */
+    await manualReport(form);
   };
 
   const getQuestion = (field: string) => {
