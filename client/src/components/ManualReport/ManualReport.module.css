@@ -1,0 +1,209 @@
+.manualReportPage {
+  width: 100%;
+  min-height: 100vh;
+  padding: 40px 20px;
+  box-sizing: border-box;
+  background: #f5f7fb;
+}
+
+.manualReportContainer {
+  width: 100%;
+  max-width: 850px;
+  margin: 0 auto;
+}
+
+.manualReportHeader {
+  margin-bottom: 30px;
+}
+
+.manualReportBadge {
+  display: inline-block;
+  padding: 6px 12px;
+  margin-bottom: 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  background: #e8eefc;
+  color: #3157a4;
+}
+
+.manualReportHeader h1 {
+  margin: 0;
+  font-size: 32px;
+  font-weight: 700;
+  color: #18202f;
+}
+
+.manualReportHeader p {
+  margin-top: 8px;
+  font-size: 15px;
+  color: #6c7482;
+}
+
+.manualReportForm {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding: 28px;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+}
+
+.manualReportField {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.manualReportField label,
+.manualReportLocation label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #252c38;
+}
+
+.manualReportField label span {
+  color: #d93636;
+}
+
+.manualReportField input,
+.manualReportField textarea,
+.manualReportField select,
+.manualReportLocation input {
+  width: 100%;
+  padding: 12px 14px;
+  box-sizing: border-box;
+  border: 1px solid #d9dee8;
+  border-radius: 9px;
+  outline: none;
+  background: #ffffff;
+  color: #202733;
+  font-size: 14px;
+  transition: border 0.2s ease, box-shadow 0.2s ease;
+}
+
+.manualReportField input:focus,
+.manualReportField textarea:focus,
+.manualReportField select:focus,
+.manualReportLocation input:focus {
+  border-color: #5274d8;
+  box-shadow: 0 0 0 3px rgba(82, 116, 216, 0.1);
+}
+
+.manualReportField textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+.manualReportFieldsSection {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding-top: 10px;
+}
+
+.manualReportSectionHeader {
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e5e8ee;
+}
+
+.manualReportSectionHeader h2 {
+  margin: 0;
+  font-size: 20px;
+  color: #202733;
+}
+
+.manualReportSectionHeader p {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: #737b89;
+}
+
+.manualReportLocation {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.manualReportLocationRow {
+  display: flex;
+  gap: 12px;
+}
+
+.manualReportLocationRow input {
+  flex: 1;
+}
+
+.manualReportLocationButton {
+  align-self: flex-start;
+  padding: 9px 14px;
+  border: none;
+  border-radius: 8px;
+  background: #eef2ff;
+  color: #405ec0;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.manualReportLocationButton:hover {
+  background: #e2e8ff;
+}
+
+.manualReportFileList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.manualReportFile {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  padding: 10px 12px;
+  border: 1px solid #e1e5ec;
+  border-radius: 8px;
+  background: #f8f9fc;
+  font-size: 13px;
+  color: #424956;
+}
+
+.manualReportSubmit {
+  width: 100%;
+  padding: 14px;
+  margin-top: 5px;
+  border: none;
+  border-radius: 10px;
+  background: #315dcc;
+  color: white;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.manualReportSubmit:hover {
+  opacity: 0.92;
+  transform: translateY(-1px);
+}
+
+@media (max-width: 650px) {
+  .manualReportPage {
+    padding: 20px 12px;
+  }
+
+  .manualReportForm {
+    padding: 20px 16px;
+  }
+
+  .manualReportHeader h1 {
+    font-size: 26px;
+  }
+
+  .manualReportLocationRow {
+    flex-direction: column;
+  }
+}
