@@ -28,9 +28,31 @@ const Classfication: React.FC<ClassficationProps> = ({ reportDraft }) => {
     return true;
   };
 
-  const formatValue = (value: any): string => {
-    if (typeof value === "object") {
-      return JSON.stringify(value, null, 2);
+  const formatValue = (key: string, value: any): string => {
+    if (key === "location" && typeof value === "object" && value !== null) {
+      if (value.address) {
+        return value.latitude && value.longitude
+          ? `${value.address} (${value.latitude.toFixed(4)}, ${value.longitude.toFixed(4)})`
+          : value.address;
+      }
+      if (value.latitude && value.longitude) {
+        return `${value.latitude.toFixed(4)}, ${value.longitude.toFixed(4)}`;
+      }
+    }
+
+    if (key === "evidence" && Array.isArray(value)) {
+      return `${value.length} file(s) attached`;
+    }
+
+    if (Array.isArray(value)) {
+      return value.join(", ");
+    }
+
+    if (typeof value === "object" && value !== null) {
+      return Object.entries(value)
+        .filter(([, v]) => isDisplayable(v))
+        .map(([k, v]) => `${k}: ${v}`)
+        .join(", ");
     }
 
     return String(value);
@@ -56,7 +78,7 @@ const Classfication: React.FC<ClassficationProps> = ({ reportDraft }) => {
           classifiedValues.map(([key, value]) => (
             <div className="classification-item" key={key}>
               <p className="classification-key">{formatKey(key)}</p>
-              <p className="classification-value">{formatValue(value)}</p>
+              <p className="classification-value">{formatValue(key, value)}</p>
             </div>
           ))
         )}

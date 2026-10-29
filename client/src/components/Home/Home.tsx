@@ -1,4 +1,15 @@
 import React, { useMemo, useState } from "react";
+import {
+  MapPin,
+  Target,
+  ThumbsUp,
+  Users,
+  MessageSquare,
+  ChevronRight,
+  Search,
+  Bell,
+  Plus,
+} from "lucide-react";
 import "./Home.css";
 
 type ReportStatus = "Pending" | "In Progress" | "Resolved";
@@ -133,7 +144,7 @@ const ReportCard: React.FC<ReportCardProps> = ({ report }) => {
       <div className="report-card-top">
         <div className="report-main-info">
           <div className="report-icon">
-            <span>📍</span>
+            <MapPin size={18} />
           </div>
 
           <div className="report-heading">
@@ -154,7 +165,7 @@ const ReportCard: React.FC<ReportCardProps> = ({ report }) => {
             <h3>{report.title}</h3>
 
             <div className="report-location">
-              <span className="location-icon">⌖</span>
+              <Target size={14} className="location-icon" />
               <span>{report.location}</span>
             </div>
           </div>
@@ -165,17 +176,17 @@ const ReportCard: React.FC<ReportCardProps> = ({ report }) => {
 
       <div className="report-actions">
         <button className="report-action-btn">
-          <span>👍</span>
+          <ThumbsUp size={16} />
           <span>{report.upvotes}</span>
         </button>
 
         <button className="report-action-btn corroboration-btn">
-          <span>👥</span>
+          <Users size={16} />
           <span>I faced this too · {report.corroborations}</span>
         </button>
 
         <button className="report-action-btn">
-          <span>💬</span>
+          <MessageSquare size={16} />
           <span>{report.comments}</span>
         </button>
 
@@ -185,7 +196,7 @@ const ReportCard: React.FC<ReportCardProps> = ({ report }) => {
       {report.similarReports > 0 && (
         <button className="cluster-box">
           <div className="cluster-left">
-            <span className="cluster-icon">👥</span>
+            <Users size={16} className="cluster-icon" />
 
             <span>
               <strong>{report.similarReports} similar reports</strong> may
@@ -193,7 +204,7 @@ const ReportCard: React.FC<ReportCardProps> = ({ report }) => {
             </span>
           </div>
 
-          <span className="cluster-arrow">›</span>
+          <ChevronRight size={16} className="cluster-arrow" />
         </button>
       )}
     </article>
@@ -218,14 +229,13 @@ const Home: React.FC = () => {
         <div className="header-inner">
           {/* Logo */}
           <div className="brand">
-            <div className="brand-logo">J</div>
-
-            <span className="brand-name">JanVoice</span>
+            <img src="/logo.jpeg" alt="JanSetu Logo" className="brand-logo-img" />
+            <span className="brand-name">JanSetu</span>
           </div>
 
           {/* Search */}
           <div className="search-wrapper">
-            <span className="search-icon">⌕</span>
+            <Search size={18} className="search-icon" />
 
             <input
               type="text"
@@ -240,7 +250,7 @@ const Home: React.FC = () => {
               className="icon-button notification-button"
               aria-label="Notifications"
             >
-              <span>🔔</span>
+              <Bell size={18} />
               <span className="notification-dot" />
             </button>
 
@@ -249,7 +259,7 @@ const Home: React.FC = () => {
             </button>
 
             <button className="new-report-button">
-              <span className="plus-icon">+</span>
+              <Plus size={18} className="plus-icon" />
               <span>New Report</span>
             </button>
           </div>

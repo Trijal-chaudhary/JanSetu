@@ -1,37 +1,272 @@
 /* ============================================================
-   LOCATION CARD COMPONENT
+   LOCATION CARD COMPONENT — JANSETU THEME
 ============================================================ */
 
 .location-card-4827 {
   width: 100%;
   max-width: 100%;
-  padding: 20px;
+  padding: 18px;
   background: #ffffff;
-  border: 1px solid #e2e8f0;
+  border: 1.5px solid #e2e8f0;
   border-radius: 16px;
-  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05);
   box-sizing: border-box;
-  margin-top: 10px;
+  margin-top: 12px;
+  animation: fadeIn 0.25s ease-out;
+}
+
+.location-card-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.location-icon-wrapper {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #eef2ff;
+  color: #4f46e5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .location-title-4827 {
-  margin: 0 0 6px;
-  font-size: 15px;
+  margin: 0 0 3px;
+  font-size: 14.5px;
   font-weight: 700;
   color: #0f172a;
   letter-spacing: -0.01em;
 }
 
 .location-description-4827 {
-  margin: 0 0 16px;
-  font-size: 12.5px;
-  line-height: 1.55;
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
   color: #64748b;
 }
 
-.location-button-4827 {
+/* Device Geolocation Button */
+.location-device-btn {
   width: 100%;
-  padding: 12px 16px;
+  padding: 10px 14px;
+  border: 1.5px solid #c7d2fe;
+  border-radius: 10px;
+  background: #f5f7ff;
+  color: #4338ca;
+  font-size: 12.5px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.location-device-btn:hover:not(:disabled) {
+  background: #eef2ff;
+  border-color: #6366f1;
+  color: #3730a3;
+  transform: translateY(-1px);
+}
+
+.location-device-btn:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+/* Divider */
+.location-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 12px 0;
+}
+
+.location-divider::before,
+.location-divider::after {
+  content: "";
+  flex: 1;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.location-divider span {
+  padding: 0 10px;
+  font-size: 11px;
+  color: #94a3b8;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Search Row */
+.location-search-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.location-input-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  position: relative;
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 0 12px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.location-input-wrapper:focus-within {
+  border-color: #6366f1;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.location-input-icon {
+  color: #94a3b8;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+.location-search-input {
+  width: 100%;
+  height: 40px;
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  color: #0f172a;
+  outline: none;
+  font-family: inherit;
+}
+
+.location-search-input::placeholder {
+  color: #94a3b8;
+}
+
+.location-search-btn {
+  height: 40px;
+  padding: 0 14px;
+  background: #f1f5f9;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.location-search-btn:hover:not(:disabled) {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.location-search-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Coordinates Toggle & Inputs */
+.location-coords-toggle-row {
+  margin-top: 10px;
+}
+
+.location-coords-toggle-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #6366f1;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.location-coords-inputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 8px;
+  padding: 10px;
+  background: #f8fafc;
+  border-radius: 10px;
+  border: 1px solid #f1f5f9;
+}
+
+.location-coord-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.location-coord-field label {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+.location-coord-field input {
+  height: 34px;
+  padding: 0 8px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 12px;
+  background: #ffffff;
+  color: #0f172a;
+  outline: none;
+}
+
+.location-coord-field input:focus {
+  border-color: #6366f1;
+}
+
+/* Error Alert */
+.location-error-4827 {
+  margin-top: 10px;
+  padding: 8px 12px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: #dc2626;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.location-error-icon {
+  flex-shrink: 0;
+}
+
+/* Map Preview */
+.location-map-preview {
+  margin-top: 12px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+}
+
+/* Confirm Action Button */
+.location-confirm-action {
+  margin-top: 14px;
+}
+
+.location-confirm-btn {
+  width: 100%;
+  padding: 11px 16px;
   border: none;
   border-radius: 10px;
   background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
@@ -40,40 +275,129 @@
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 3px 10px rgba(79, 70, 229, 0.25);
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
+  box-shadow: 0 3px 10px rgba(79, 70, 229, 0.25);
 }
 
-.location-button-4827:hover:not(:disabled) {
+.location-confirm-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #4338ca 0%, #3730a3 100%);
   transform: translateY(-1px);
   box-shadow: 0 5px 14px rgba(79, 70, 229, 0.35);
-  background: linear-gradient(135deg, #4338ca 0%, #3730a3 100%);
 }
 
-.location-button-4827:active:not(:disabled) {
-  transform: translateY(0);
-}
-
-.location-button-4827:disabled {
-  opacity: 0.75;
-  cursor: wait;
+.location-confirm-btn:disabled {
+  background: #e2e8f0;
+  color: #94a3b8;
   box-shadow: none;
-  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  cursor: not-allowed;
 }
 
-.location-error-4827 {
-  margin: 12px 0 0;
-  padding: 10px 12px;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  border-radius: 10px;
-  color: #dc2626;
+/* ============================================================
+   CONFIRMED LOCATION CARD BADGE
+============================================================ */
+
+.location-card-confirmed {
+  width: 100%;
+  padding: 14px;
+  background: #f8fafc;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 14px;
+  margin-top: 10px;
+  box-sizing: border-box;
+}
+
+.location-confirmed-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.location-confirmed-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #15803d;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.location-badge-icon {
+  background: #dcfce7;
+  padding: 2px;
+  border-radius: 50%;
+}
+
+.location-edit-btn {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+}
+
+.location-edit-btn:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.location-confirmed-body {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.location-pin-icon {
+  color: #4f46e5;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.location-confirmed-details {
+  flex: 1;
+}
+
+.location-confirmed-address {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
   line-height: 1.45;
 }
 
+.location-confirmed-coords {
+  display: block;
+  font-size: 11px;
+  color: #64748b;
+  margin-top: 3px;
+  font-family: monospace;
+}
+
+.location-confirmed-map {
+  margin-top: 10px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+}
+
+.location-spin {
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

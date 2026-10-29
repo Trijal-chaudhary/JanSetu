@@ -27,4 +27,27 @@ export interface ReportDraft {
   riskOrUrgency: string | null;
   impact: string | null;
   desiredResolution: string | null;
+  affectedPeople?: string | null;
+  supportedBy?: string[];
+}
+
+export type RequestedInputType =
+  | "text"
+  | "location"
+  | "image"
+  | "document"
+  | "evidence"
+  | "date"
+  | "selection"
+  | "general";
+
+export interface AIResponsePayload {
+  assistantMessage: string;
+  reportDraft: ReportDraft;
+  missingRequiredFields: string[];
+  requiredFields: string[];
+  isComplete: boolean;
+  aiQueryType: string;
+  requestedInputType: RequestedInputType;
+  requestedField: string | null;
 }

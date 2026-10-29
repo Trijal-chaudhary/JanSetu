@@ -14,3 +14,12 @@ pythonService/chromadb/
 server/upload/
 
 server/.env
+
+depart/node_modules
+
+# Python Services
+python-services/.venv/
+python-services/**/__pycache__/
+python-services/.pytest_cache/
+python-services/chroma_data/
+python-services/.env

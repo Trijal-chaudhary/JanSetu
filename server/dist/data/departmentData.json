@@ -1,0 +1,166 @@
+[
+    {
+        "departmentId": "dept_admin_01",
+        "departmentName": "Knowledge Park II Administrative & Revenue Services",
+        "category": "Administrative Processes",
+        "subcategories": [
+            "Applying for a birth/death certificate",
+            "Obtaining a domicile or income certificate",
+            "Applying for a driving licence",
+            "Passport-related government processes",
+            "Land/property records"
+        ],
+        "username": "admin_kp2",
+        "password": "AdminPass@2026",
+        "location": {
+            "area": "Knowledge Park II",
+            "city": "Greater Noida",
+            "state": "Uttar Pradesh",
+            "latitude": 28.4615,
+            "longitude": 77.5132
+        }
+    },
+    {
+        "departmentId": "dept_welfare_01",
+        "departmentName": "Knowledge Park II Social Welfare & Benefits Office",
+        "category": "Welfare Schemes",
+        "subcategories": [
+            "Scholarships",
+            "Pension schemes",
+            "Subsidies",
+            "Food/ration benefits",
+            "Housing assistance",
+            "Employment-related schemes",
+            "Financial assistance for eligible families"
+        ],
+        "username": "welfare_kp2",
+        "password": "WelfarePass@2026",
+        "location": {
+            "area": "Knowledge Park II",
+            "city": "Greater Noida",
+            "state": "Uttar Pradesh",
+            "latitude": 28.462,
+            "longitude": 77.514
+        }
+    },
+    {
+        "departmentId": "dept_edu_01",
+        "departmentName": "Greater Noida Education & Schools Inspectorate",
+        "category": "Education",
+        "subcategories": [
+            "Problems in government schools or colleges",
+            "Lack of basic facilities",
+            "Teacher/staff-related issues",
+            "Scholarship-related problems",
+            "Delays in educational certificates"
+        ],
+        "username": "edu_kp2",
+        "password": "EduPass@2026",
+        "location": {
+            "area": "Knowledge Park II",
+            "city": "Greater Noida",
+            "state": "Uttar Pradesh",
+            "latitude": 28.4635,
+            "longitude": 77.509
+        }
+    },
+    {
+        "departmentId": "dept_safety_01",
+        "departmentName": "Knowledge Park II Public Safety & Civil Defense",
+        "category": "Public Safety",
+        "subcategories": [
+            "Unsafe roads or public areas",
+            "Missing or damaged safety infrastructure",
+            "Streetlights in areas where darkness creates safety concerns",
+            "Dangerous public infrastructure",
+            "Emergency-response issues"
+        ],
+        "username": "safety_kp2",
+        "password": "SafetyPass@2026",
+        "location": {
+            "area": "Knowledge Park II",
+            "city": "Greater Noida",
+            "state": "Uttar Pradesh",
+            "latitude": 28.465,
+            "longitude": 77.512
+        }
+    },
+    {
+        "departmentId": "dept_infra_kp2",
+        "departmentName": "Greater Noida Public Works & Infrastructure Authority (Knowledge Park II Zone)",
+        "category": "Public Infrastructure",
+        "subcategories": [
+            "Roads and potholes",
+            "Streetlights",
+            "Drainage systems",
+            "Water supply",
+            "Public toilets",
+            "Bridges",
+            "Footpaths",
+            "Government buildings",
+            "Public transportation infrastructure"
+        ],
+        "username": "trijal",
+        "password": "1234",
+        "location": {
+            "area": "Knowledge Park II",
+            "city": "Greater Noida",
+            "state": "Uttar Pradesh",
+            "latitude": 28.4682,
+            "longitude": 77.518,
+            "radiusKm": 10
+        }
+    },
+    {
+        "departmentId": "dept_infra_noida62",
+        "departmentName": "Noida Municipal Public Works & Infrastructure Authority (Sector 62 Zone)",
+        "category": "Public Infrastructure",
+        "subcategories": [
+            "Roads and potholes",
+            "Streetlights",
+            "Drainage systems",
+            "Water supply",
+            "Public toilets",
+            "Bridges",
+            "Footpaths",
+            "Government buildings",
+            "Public transportation infrastructure"
+        ],
+        "username": "pwd_noida",
+        "password": "PwdPass@2026",
+        "location": {
+            "area": "Sector 62",
+            "city": "Noida",
+            "state": "Uttar Pradesh",
+            "latitude": 28.625,
+            "longitude": 77.373,
+            "radiusKm": 10
+        }
+    },
+    {
+        "departmentId": "dept_infra_gnwest",
+        "departmentName": "Greater Noida West Infrastructure & Roads Division (Gaur City Zone)",
+        "category": "Public Infrastructure",
+        "subcategories": [
+            "Roads and potholes",
+            "Streetlights",
+            "Drainage systems",
+            "Water supply",
+            "Public toilets",
+            "Bridges",
+            "Footpaths",
+            "Government buildings",
+            "Public transportation infrastructure"
+        ],
+        "username": "infra_gnwest",
+        "password": "InfraPass@2026",
+        "location": {
+            "area": "Gaur City",
+            "city": "Greater Noida West",
+            "state": "Uttar Pradesh",
+            "latitude": 28.5855,
+            "longitude": 77.4385,
+            "radiusKm": 10
+        }
+    }
+]

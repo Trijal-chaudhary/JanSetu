@@ -1,0 +1,80 @@
+{
+  "departments": [
+    {
+      "departmentId": "dept_admin_01",
+      "departmentName": "Department of Administrative Reforms & Revenue Services",
+      "username": "admin_dept",
+      "password": "AdminPass@2026",
+      "category": "Administrative Processes",
+      "subcategories": [
+        "Applying for a birth/death certificate",
+        "Obtaining a domicile or income certificate",
+        "Applying for a driving licence",
+        "Passport-related government processes",
+        "Land/property records"
+      ]
+    },
+    {
+      "departmentId": "dept_welfare_01",
+      "departmentName": "Department of Social Welfare & Empowerment",
+      "username": "welfare_dept",
+      "password": "WelfarePass@2026",
+      "category": "Welfare Schemes",
+      "subcategories": [
+        "Scholarships",
+        "Pension schemes",
+        "Subsidies",
+        "Food/ration benefits",
+        "Housing assistance",
+        "Employment-related schemes",
+        "Financial assistance for eligible families"
+      ]
+    },
+    {
+      "departmentId": "dept_infra_01",
+      "departmentName": "Public Works & Infrastructure Development Authority",
+      "username": "infra_dept",
+      "password": "InfraPass@2026",
+      "category": "Public Infrastructure",
+      "subcategories": [
+        "Roads and potholes",
+        "Streetlights",
+        "Drainage systems",
+        "Water supply",
+        "Public toilets",
+        "Bridges",
+        "Footpaths",
+        "Government buildings",
+        "Public transportation infrastructure"
+      ]
+    },
+    {
+      "departmentId": "dept_edu_01",
+      "departmentName": "Department of School & Higher Education",
+      "username": "edu_dept",
+      "password": "EduPass@2026",
+      "category": "Education",
+      "subcategories": [
+        "Problems in government schools or colleges",
+        "Lack of basic facilities",
+        "Teacher/staff-related issues",
+        "Scholarship-related problems",
+        "Delays in educational certificates"
+      ]
+    },
+    {
+      "departmentId": "dept_safety_01",
+      "departmentName": "Department of Public Safety & Civil Defense",
+      "username": "safety_dept",
+      "password": "SafetyPass@2026",
+      "category": "Public Safety",
+      "subcategories": [
+        "Unsafe roads or public areas",
+        "Missing or damaged safety infrastructure",
+        "Streetlights in areas where darkness creates safety concerns",
+        "Dangerous public infrastructure",
+        "Emergency-response issues"
+      ]
+    }
+  ]
+}

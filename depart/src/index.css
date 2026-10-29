@@ -1,0 +1,90 @@
+:root {
+  --bg-primary: #f8fafc;
+  --bg-secondary: #ffffff;
+  --bg-card: #ffffff;
+  --bg-subtle: #f1f5f9;
+  --bg-active: #eff6ff;
+  
+  --border-color: #e2e8f0;
+  --border-focus: #1d4ed8;
+  
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  
+  --jansetu-blue: #1d4ed8;
+  --jansetu-blue-dark: #1e40af;
+  --jansetu-blue-light: #dbeafe;
+
+  --badge-reported-bg: #fef3c7;
+  --badge-reported-text: #92400e;
+  --badge-reported-border: #fde68a;
+
+  --badge-review-bg: #eff6ff;
+  --badge-review-text: #1e40af;
+  --badge-review-border: #bfdbfe;
+
+  --badge-progress-bg: #faf5ff;
+  --badge-progress-text: #6b21a8;
+  --badge-progress-border: #e9d5ff;
+
+  --badge-resolved-bg: #f0fdf4;
+  --badge-resolved-text: #166534;
+  --badge-resolved-border: #bbf7d0;
+
+  --badge-rejected-bg: #fef2f2;
+  --badge-rejected-text: #991b1b;
+  --badge-rejected-border: #fecaca;
+
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-heading: 'Outfit', 'Inter', -apple-system, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-family);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.5;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+button {
+  cursor: pointer;
+  font-family: var(--font-family);
+  border: none;
+  outline: none;
+}
+
+input, select, textarea {
+  font-family: var(--font-family);
+  outline: none;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}

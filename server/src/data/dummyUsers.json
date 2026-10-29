@@ -1,0 +1,146 @@
+[
+  {
+    "id": "user_01",
+    "username": "rahul01",
+    "password": "123456",
+    "name": "Rahul Kumar",
+    "profilePhoto": "http://localhost:3007/data/images/users/user_01.jpg",
+    "location": {
+      "area": "Knowledge Park II, Greater Noida",
+      "latitude": 28.4615,
+      "longitude": 77.5132
+    }
+  },
+  {
+    "id": "user_02",
+    "username": "priya_s",
+    "password": "123456",
+    "name": "Priya Sharma",
+    "profilePhoto": "http://localhost:3007/data/images/users/user_02.jpg",
+    "location": {
+      "area": "Pari Chowk, Greater Noida",
+      "latitude": 28.4682,
+      "longitude": 77.518
+    }
+  },
+  {
+    "id": "user_03",
+    "username": "amit_kp3",
+    "password": "123456",
+    "name": "Amit Patel",
+    "profilePhoto": "http://localhost:3007/data/images/users/user_03.jpg",
+    "location": {
+      "area": "Knowledge Park III, Greater Noida",
+      "latitude": 28.4645,
+      "longitude": 77.5061
+    }
+  },
+  {
+    "id": "user_04",
+    "username": "sneha_alpha",
+    "password": "123456",
+    "name": "Sneha Gupta",
+    "profilePhoto": "http://localhost:3007/data/images/users/user_04.jpg",
+    "location": {
+      "area": "Sector Alpha 1, Greater Noida",
+      "latitude": 28.474,
+      "longitude": 77.5032
+    }
+  },
+  {
+    "id": "user_05",
+    "username": "vikram_beta",
+    "password": "123456",
+    "name": "Vikram Singh",
+    "profilePhoto": "http://localhost:3007/data/images/users/user_05.jpg",
+    "location": {
+      "area": "Sector Beta 2, Greater Noida",
+      "latitude": 28.4792,
+      "longitude": 77.5081
+    }
+  },
+  {
+    "id": "user_06",
+    "username": "neha_jagat",
+    "password": "123456",
+    "name": "Neha Verma",
+    "profilePhoto": "http://localhost:3007/data/images/users/user_06.jpg",
+    "location": {
+      "area": "Jagat Farm, Greater Noida",
+      "latitude": 28.4721,
+      "longitude": 77.5105
+    }
+  },
+  {
+    "id": "user_07",
+    "username": "ankit_surajpur",
+    "password": "123456",
+    "name": "Ankit Yadav",
+    "profilePhoto": "http://localhost:3007/data/images/users/user_07.jpg",
+    "location": {
+      "area": "Surajpur, Greater Noida",
+      "latitude": 28.5204,
+      "longitude": 77.497
+    }
+  },
+  {
+    "id": "user_08",
+    "username": "pooja_gamma",
+    "password": "123456",
+    "name": "Pooja Mishra",
+    "profilePhoto": "http://localhost:3007/data/images/users/user_08.jpg",
+    "location": {
+      "area": "Sector Gamma 1, Greater Noida",
+      "latitude": 28.4765,
+      "longitude": 77.5112
+    }
+  },
+  {
+    "id": "user_09",
+    "username": "rajesh_lko",
+    "password": "123456",
+    "name": "Rajesh Srivastava",
+    "profilePhoto": "http://localhost:3007/data/images/users/user_09.jpg",
+    "location": {
+      "area": "Hazratganj, Lucknow",
+      "latitude": 26.8467,
+      "longitude": 80.9462
+    }
+  },
+  {
+    "id": "user_10",
+    "username": "kavita_blr",
+    "password": "123456",
+    "name": "Kavita Rao",
+    "profilePhoto": "http://localhost:3007/data/images/users/user_10.jpg",
+    "location": {
+      "area": "Whitefield, Bengaluru",
+      "latitude": 12.9698,
+      "longitude": 77.7499
+    }
+  },
+  {
+    "id": "user_11",
+    "username": "manoj_delhi",
+    "password": "123456",
+    "name": "Manoj Joshi",
+    "profilePhoto": "http://localhost:3007/data/images/users/user_11.jpg",
+    "location": {
+      "area": "Rohini, New Delhi",
+      "latitude": 28.7041,
+      "longitude": 77.1025
+    }
+  },
+  {
+    "id": "user_12",
+    "username": "sunita_patna",
+    "password": "123456",
+    "name": "Sunita Choudhury",
+    "profilePhoto": "http://localhost:3007/data/images/users/user_12.jpg",
+    "location": {
+      "area": "Kankarbagh, Patna",
+      "latitude": 25.5941,
+      "longitude": 85.1612
+    }
+  }
+]

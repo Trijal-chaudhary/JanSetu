@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 interface SubcategoryData {
   requiredFields: string[];
 }
@@ -12,9 +13,12 @@ interface RequiredInfo {
   categories: Record<string, CategoryData>;
 }
 import styles from "./ManualReport.module.css";
+import NavBar from "../Navbar/NavBar";
 
 import requiredInfoJson from "../../data/reqInfo.json";
-import { manualReport, uploadingEvidence } from "../../services/fetching";
+import { manualReport, uploadingEvidence, toggleSupportReport, saveDraft } from "../../services/fetching";
+import { useAuth } from "../../context/AuthContext";
+import SimilarIssuesModal, { type CandidateIssue } from "../SimilarIssues/SimilarIssuesModal";
 const requiredInfo = requiredInfoJson as RequiredInfo;
 
 interface LocationDetails {
@@ -85,10 +89,26 @@ const fieldLabels: Record<string, string> = {
 };
 
 export default function ManualReport() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [form, setForm] = useState<ReportForm>(initialForm);
 
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [isPreparingDraft, setIsPreparingDraft] = useState(false);
+  const [similarCandidates, setSimilarCandidates] = useState<CandidateIssue[]>([]);
+  const [isSubmittingNew, setIsSubmittingNew] = useState(false);
+
+  // Restore form state if returning from Sensitivity Review page
+  useEffect(() => {
+    if ((location.state as any)?.draft) {
+      setForm((prev) => ({
+        ...prev,
+        ...(location.state as any).draft,
+      }));
+    }
+  }, [location.state]);
 
   const categories = requiredInfo.categories;
 
@@ -98,7 +118,7 @@ export default function ManualReport() {
     return Object.keys(
       categories[form.category as keyof typeof categories]?.subcategories || {}
     );
-  }, [form.category]);
+  }, [form.category, categories]);
 
   const requiredFields = useMemo(() => {
     if (!form.category || !form.subcategory) return [];
@@ -113,7 +133,7 @@ export default function ManualReport() {
       ];
 
     return subcategoryData?.requiredFields || [];
-  }, [form.category, form.subcategory]);
+  }, [form.category, form.subcategory, categories]);
 
   const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const category = e.target.value;
@@ -212,17 +232,62 @@ export default function ManualReport() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    console.log("Manual Report:", form);
+    if (!form.category || !form.subcategory) {
+      alert("Please select category and subcategory.");
+      return;
+    }
 
-    /*
-      Later:
+    try {
+      setIsPreparingDraft(true);
+      const sanitizedPayload = {
+        ...form,
+        createdBy: user?.id || user?.username || null,
+        userId: user?.id || null,
+      };
 
-      1. Upload evidence
-      2. Get uploaded URLs
-      3. Send final report to backend
-      4. Show confirmation
-    */
-    await manualReport(form);
+      const res = await saveDraft(sanitizedPayload);
+      const targetDraftId = res?.draftId || `draft_${Date.now()}`;
+      sessionStorage.setItem("jansetu_active_draft_id", targetDraftId);
+      sessionStorage.setItem("jansetu_active_draft", JSON.stringify(sanitizedPayload));
+
+      navigate(`/sensitivity-review?draftId=${targetDraftId}&source=manual`, {
+        state: { draftId: targetDraftId, draft: sanitizedPayload },
+      });
+    } catch (err: any) {
+      console.error("Failed to prepare draft for sensitivity review:", err);
+      alert("Failed to prepare grievance draft. Please try again.");
+    } finally {
+      setIsPreparingDraft(false);
+    }
+  };
+
+  const handleSupportSimilar = async (reportId: string): Promise<boolean> => {
+    try {
+      const res = await toggleSupportReport(reportId, user?.id);
+      return Boolean(res && res.success);
+    } catch (err) {
+      console.error("Support submission error:", err);
+      return false;
+    }
+  };
+
+  const handleConfirmSubmitNew = async () => {
+    setIsSubmittingNew(true);
+    try {
+      const res = await manualReport({ ...form, skipSimilarityCheck: true });
+      if (res && res.success) {
+        setSimilarCandidates([]);
+        alert("Manual grievance submitted successfully!");
+        window.location.href = "/feed";
+      } else {
+        alert(res?.message || "Failed to submit grievance.");
+      }
+    } catch (err) {
+      console.error("Grievance submission error:", err);
+      alert("Failed to submit grievance.");
+    } finally {
+      setIsSubmittingNew(false);
+    }
   };
 
   const getQuestion = (field: string) => {
@@ -403,6 +468,7 @@ export default function ManualReport() {
 
   return (
     <div className={styles.manualReportPage}>
+      <NavBar />
       <div className={styles.manualReportContainer}>
         <div className={styles.manualReportHeader}>
           <span className={styles.manualReportBadge}>Manual Mode</span>
@@ -480,11 +546,25 @@ export default function ManualReport() {
           {/* SUBMIT */}
 
           {form.category && form.subcategory && requiredFields.length > 0 && (
-            <button type="submit" className={styles.manualReportSubmit}>
-              Submit Report
+            <button
+              type="submit"
+              className={styles.manualReportSubmit}
+              disabled={isPreparingDraft}
+            >
+              {isPreparingDraft ? "Preparing Sensitivity Review..." : "Proceed to Sensitivity Review"}
             </button>
           )}
         </form>
+
+        {similarCandidates.length > 0 && (
+          <SimilarIssuesModal
+            candidates={similarCandidates}
+            onSupport={handleSupportSimilar}
+            onContinueSubmit={handleConfirmSubmitNew}
+            onClose={() => setSimilarCandidates([])}
+            isSubmittingOriginal={isSubmittingNew}
+          />
+        )}
       </div>
     </div>
   );

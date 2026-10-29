@@ -1,4 +1,5 @@
 import React from "react";
+import { Check, Circle, Minus } from "lucide-react";
 import "./ReportProgress.css";
 
 interface ReportProgressProps {
@@ -19,6 +20,7 @@ const fields = [
   { key: "riskOrUrgency", label: "Risk or urgency" },
   { key: "impact", label: "Impact" },
   { key: "desiredResolution", label: "Desired resolution" },
+  { key: "affectedPeople", label: "Affected people / scope" },
 ];
 
 const isFilled = (key: string, value: any) => {
@@ -37,7 +39,7 @@ const isFilled = (key: string, value: any) => {
   }
 
   if (typeof value === "string") {
-    return value.trim().length > 0;
+    return value.trim().length > 0 && value.trim().toLowerCase() !== "notrequired";
   }
 
   return false;
@@ -117,7 +119,7 @@ const ReportProgress: React.FC<ReportProgressProps> = ({
                     : "pending-icon-7392"
                 }`}
               >
-                {!required ? "—" : completed ? "✓" : "○"}
+                {!required ? <Minus size={12} /> : completed ? <Check size={12} /> : <Circle size={12} />}
               </span>
 
               <div className="requirement-content-7392">

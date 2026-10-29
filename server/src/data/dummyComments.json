@@ -1,0 +1,464 @@
+[
+  {
+    "id": "comment_001",
+    "reportId": "dummy_013",
+    "userId": "user_01",
+    "comment": "I pass by Knowledge Park II Metro station daily and this crater has damaged two student scooters already. Authorities need to repair this asphalt urgently.",
+    "likes": 28,
+    "likedBy": ["user_01", "user_02", "user_03", "user_04", "user_05", "user_06"],
+    "createdAt": "2026-10-06T09:15:00.000Z"
+  },
+  {
+    "id": "comment_002",
+    "reportId": "dummy_013",
+    "userId": "user_03",
+    "comment": "Fully agree! The crater gets filled with rainwater making it invisible to commuters at night. Extremely dangerous!",
+    "likes": 21,
+    "likedBy": ["user_01", "user_03", "user_05", "user_07"],
+    "createdAt": "2026-10-06T10:30:00.000Z"
+  },
+  {
+    "id": "comment_003",
+    "reportId": "dummy_013",
+    "userId": "user_02",
+    "comment": "Reported this to the GNIDA helpline yesterday as well. Hope work begins soon.",
+    "likes": 14,
+    "likedBy": ["user_02", "user_04"],
+    "createdAt": "2026-10-06T11:45:00.000Z"
+  },
+  {
+    "id": "comment_004",
+    "reportId": "dummy_013",
+    "userId": "user_06",
+    "comment": "It's right outside the college gate! Students walk right past the loose gravel.",
+    "likes": 11,
+    "likedBy": ["user_06"],
+    "createdAt": "2026-10-06T12:10:00.000Z"
+  },
+  {
+    "id": "comment_005",
+    "reportId": "dummy_013",
+    "userId": "user_08",
+    "comment": "Even auto rickshaws slow down to a crawl here causing bottleneck jams.",
+    "likes": 8,
+    "likedBy": ["user_08"],
+    "createdAt": "2026-10-06T13:00:00.000Z"
+  },
+  {
+    "id": "comment_006",
+    "reportId": "dummy_013",
+    "userId": "user_07",
+    "comment": "Temporary filling with stones is not enough. Proper asphalt layering is required.",
+    "likes": 6,
+    "likedBy": ["user_07"],
+    "createdAt": "2026-10-06T14:20:00.000Z"
+  },
+  {
+    "id": "comment_007",
+    "reportId": "dummy_013",
+    "userId": "user_05",
+    "comment": "I registered a complaint on the state civic app 3 days ago.",
+    "likes": 4,
+    "likedBy": ["user_05"],
+    "createdAt": "2026-10-06T15:00:00.000Z"
+  },
+  {
+    "id": "comment_008",
+    "reportId": "dummy_013",
+    "userId": "user_04",
+    "comment": "Heavy trucks passing through night shift make the pothole deeper every day.",
+    "likes": 3,
+    "likedBy": [],
+    "createdAt": "2026-10-06T15:30:00.000Z"
+  },
+  {
+    "id": "comment_009",
+    "reportId": "dummy_013",
+    "userId": "user_11",
+    "comment": "Similar road issues are happening near expressway link roads as well.",
+    "likes": 2,
+    "likedBy": [],
+    "createdAt": "2026-10-06T16:00:00.000Z"
+  },
+  {
+    "id": "comment_010",
+    "reportId": "dummy_013",
+    "userId": "user_09",
+    "comment": "Please keep posting updates if maintenance crew arrives.",
+    "likes": 1,
+    "likedBy": [],
+    "createdAt": "2026-10-06T16:15:00.000Z"
+  },
+  {
+    "id": "comment_011",
+    "reportId": "dummy_013",
+    "userId": "user_10",
+    "comment": "Local resident welfare association has also escalated this issue.",
+    "likes": 0,
+    "likedBy": [],
+    "createdAt": "2026-10-06T16:45:00.000Z"
+  },
+
+  {
+    "id": "comment_012",
+    "reportId": "dummy_014",
+    "userId": "user_04",
+    "comment": "The unlit stretch in Pocket A Sector Alpha 1 has become very unsafe after 8 PM. Please fix the LED drivers soon.",
+    "likes": 19,
+    "likedBy": ["user_04", "user_05", "user_08"],
+    "createdAt": "2026-10-05T19:20:00.000Z"
+  },
+  {
+    "id": "comment_013",
+    "reportId": "dummy_014",
+    "userId": "user_05",
+    "comment": "Dangling wires near the light pole pose an electrical safety risk during rains!",
+    "likes": 15,
+    "likedBy": ["user_05", "user_04"],
+    "createdAt": "2026-10-05T20:10:00.000Z"
+  },
+  {
+    "id": "comment_014",
+    "reportId": "dummy_014",
+    "userId": "user_08",
+    "comment": "Senior citizens walking after dinner cannot see the broken footpath tiles.",
+    "likes": 9,
+    "likedBy": ["user_08"],
+    "createdAt": "2026-10-05T21:00:00.000Z"
+  },
+  {
+    "id": "comment_015",
+    "reportId": "dummy_014",
+    "userId": "user_02",
+    "comment": "Electricity department maintenance van was seen inspecting Pocket B yesterday. Hope they cover Pocket A today.",
+    "likes": 5,
+    "likedBy": [],
+    "createdAt": "2026-10-05T21:30:00.000Z"
+  },
+  {
+    "id": "comment_016",
+    "reportId": "dummy_014",
+    "userId": "user_01",
+    "comment": "Lighting is crucial here as many students walk towards Pari Chowk from here.",
+    "likes": 3,
+    "likedBy": [],
+    "createdAt": "2026-10-05T22:00:00.000Z"
+  },
+  {
+    "id": "comment_017",
+    "reportId": "dummy_014",
+    "userId": "user_06",
+    "comment": "Third time in two months that streetlights went down in Alpha 1.",
+    "likes": 1,
+    "likedBy": [],
+    "createdAt": "2026-10-05T22:15:00.000Z"
+  },
+
+  {
+    "id": "comment_018",
+    "reportId": "dummy_015",
+    "userId": "user_02",
+    "comment": "Waterlogging near Pari Chowk commercial exit is causing massive traffic jams during peak evening hours.",
+    "likes": 23,
+    "likedBy": ["user_02", "user_03", "user_06", "user_07"],
+    "createdAt": "2026-10-05T14:45:00.000Z"
+  },
+  {
+    "id": "comment_019",
+    "reportId": "dummy_015",
+    "userId": "user_06",
+    "comment": "The drain grate is completely choked with plastic waste and mud. Suction cleaning is required.",
+    "likes": 17,
+    "likedBy": ["user_06", "user_02"],
+    "createdAt": "2026-10-05T16:10:00.000Z"
+  },
+  {
+    "id": "comment_020",
+    "reportId": "dummy_015",
+    "userId": "user_03",
+    "comment": "Shopkeepers near the commercial belt are facing water seepage into basement stores.",
+    "likes": 10,
+    "likedBy": ["user_03"],
+    "createdAt": "2026-10-05T17:00:00.000Z"
+  },
+  {
+    "id": "comment_021",
+    "reportId": "dummy_015",
+    "userId": "user_07",
+    "comment": "Heavy stench is unbearable for commuters waiting at the auto stand.",
+    "likes": 7,
+    "likedBy": [],
+    "createdAt": "2026-10-05T18:00:00.000Z"
+  },
+  {
+    "id": "comment_022",
+    "reportId": "dummy_015",
+    "userId": "user_01",
+    "comment": "Municipal suction tanker needed immediately.",
+    "likes": 4,
+    "likedBy": [],
+    "createdAt": "2026-10-05T19:00:00.000Z"
+  },
+  {
+    "id": "comment_023",
+    "reportId": "dummy_015",
+    "userId": "user_08",
+    "comment": "Please avoid the Pari Chowk service lane route during rain.",
+    "likes": 2,
+    "likedBy": [],
+    "createdAt": "2026-10-05T19:30:00.000Z"
+  },
+  {
+    "id": "comment_024",
+    "reportId": "dummy_015",
+    "userId": "user_05",
+    "comment": "Authority officers inspected the spot earlier today.",
+    "likes": 0,
+    "likedBy": [],
+    "createdAt": "2026-10-05T20:00:00.000Z"
+  },
+
+  {
+    "id": "comment_025",
+    "reportId": "dummy_016",
+    "userId": "user_05",
+    "comment": "Water pressure in Block C Beta 2 has been terrible all week. We had to order private water tankers twice.",
+    "likes": 16,
+    "likedBy": ["user_05", "user_08"],
+    "createdAt": "2026-10-04T08:00:00.000Z"
+  },
+  {
+    "id": "comment_026",
+    "reportId": "dummy_016",
+    "userId": "user_08",
+    "comment": "The water supplied at 6 AM was muddy and unhygienic for kitchen use.",
+    "likes": 12,
+    "likedBy": ["user_08"],
+    "createdAt": "2026-10-04T09:15:00.000Z"
+  },
+  {
+    "id": "comment_027",
+    "reportId": "dummy_016",
+    "userId": "user_04",
+    "comment": "Pipe leakage near Sector Beta main pump house seems to be the root cause.",
+    "likes": 6,
+    "likedBy": [],
+    "createdAt": "2026-10-04T11:00:00.000Z"
+  },
+  {
+    "id": "comment_028",
+    "reportId": "dummy_016",
+    "userId": "user_06",
+    "comment": "RWA has submitted a memorandum to the GNIDA Water Department.",
+    "likes": 3,
+    "likedBy": [],
+    "createdAt": "2026-10-04T12:30:00.000Z"
+  },
+
+  {
+    "id": "comment_029",
+    "reportId": "dummy_023",
+    "userId": "user_03",
+    "comment": "The classroom ceiling plaster in KP III polytechnic building fell right near the front bench yesterday. Very dangerous for students.",
+    "likes": 25,
+    "likedBy": ["user_03", "user_01", "user_02"],
+    "createdAt": "2026-10-03T12:00:00.000Z"
+  },
+  {
+    "id": "comment_030",
+    "reportId": "dummy_023",
+    "userId": "user_01",
+    "comment": "Furniture is also broken and insufficient for diploma classes.",
+    "likes": 18,
+    "likedBy": ["user_01", "user_03"],
+    "createdAt": "2026-10-03T13:10:00.000Z"
+  },
+  {
+    "id": "comment_031",
+    "reportId": "dummy_023",
+    "userId": "user_06",
+    "comment": "Technical education department must inspect institute buildings urgently.",
+    "likes": 11,
+    "likedBy": [],
+    "createdAt": "2026-10-03T14:00:00.000Z"
+  },
+  {
+    "id": "comment_032",
+    "reportId": "dummy_023",
+    "userId": "user_04",
+    "comment": "Students have submitted a petition to the principal's office.",
+    "likes": 5,
+    "likedBy": [],
+    "createdAt": "2026-10-03T15:20:00.000Z"
+  },
+
+  {
+    "id": "comment_033",
+    "reportId": "dummy_001",
+    "userId": "user_01",
+    "comment": "The birth certificate portal has been unresponsive for weeks. Many parents are facing difficulty with school admissions.",
+    "likes": 13,
+    "likedBy": ["user_01", "user_02"],
+    "createdAt": "2026-10-04T10:00:00.000Z"
+  },
+  {
+    "id": "comment_034",
+    "reportId": "dummy_001",
+    "userId": "user_02",
+    "comment": "The Tehsildar office counter staff asks applicants to check online, but online status stays stuck at processing.",
+    "likes": 9,
+    "likedBy": ["user_02"],
+    "createdAt": "2026-10-04T11:15:00.000Z"
+  },
+  {
+    "id": "comment_035",
+    "reportId": "dummy_001",
+    "userId": "user_06",
+    "comment": "Jan Hit Guarantee Act specifies 15 days max timeline for certificate issuance!",
+    "likes": 7,
+    "likedBy": [],
+    "createdAt": "2026-10-04T12:00:00.000Z"
+  },
+
+  {
+    "id": "comment_036",
+    "reportId": "dummy_029",
+    "userId": "user_02",
+    "comment": "This pedestrian connector from Pari Chowk metro is crucial for women returning from work. Immediate lighting restoration is required.",
+    "likes": 27,
+    "likedBy": ["user_02", "user_04", "user_06", "user_08"],
+    "createdAt": "2026-10-03T21:00:00.000Z"
+  },
+  {
+    "id": "comment_037",
+    "reportId": "dummy_029",
+    "userId": "user_04",
+    "comment": "Complete pitch darkness between 8 PM to 11 PM makes walking alone scary.",
+    "likes": 19,
+    "likedBy": ["user_04", "user_02"],
+    "createdAt": "2026-10-03T21:40:00.000Z"
+  },
+  {
+    "id": "comment_038",
+    "reportId": "dummy_029",
+    "userId": "user_08",
+    "comment": "A police PCR van should patrol this stretch until lights are restored.",
+    "likes": 14,
+    "likedBy": ["user_08"],
+    "createdAt": "2026-10-03T22:15:00.000Z"
+  },
+
+  {
+    "id": "comment_039",
+    "reportId": "dummy_030",
+    "userId": "user_06",
+    "comment": "The open transformer near Jagat Farm market entrance is an extreme hazard during market hours. Children walk right past it.",
+    "likes": 22,
+    "likedBy": ["user_06", "user_08"],
+    "createdAt": "2026-10-02T14:30:00.000Z"
+  },
+  {
+    "id": "comment_040",
+    "reportId": "dummy_030",
+    "userId": "user_08",
+    "comment": "Exposed high voltage wires are at waist height! NPCL must install mesh fencing.",
+    "likes": 16,
+    "likedBy": ["user_08"],
+    "createdAt": "2026-10-02T15:10:00.000Z"
+  },
+  {
+    "id": "comment_041",
+    "reportId": "dummy_030",
+    "userId": "user_03",
+    "comment": "Sparks were seen flying during heavy rain last Thursday.",
+    "likes": 8,
+    "likedBy": [],
+    "createdAt": "2026-10-02T16:00:00.000Z"
+  },
+
+  {
+    "id": "comment_042",
+    "reportId": "dummy_032",
+    "userId": "user_01",
+    "comment": "Road outside Galgotias college gate gets submerged after just 20 minutes of rain.",
+    "likes": 15,
+    "likedBy": ["user_01", "user_03"],
+    "createdAt": "2026-10-06T07:15:00.000Z"
+  },
+  {
+    "id": "comment_043",
+    "reportId": "dummy_032",
+    "userId": "user_03",
+    "comment": "E-rickshaws frequently lose balance on hidden gravel under water.",
+    "likes": 10,
+    "likedBy": ["user_03"],
+    "createdAt": "2026-10-06T08:00:00.000Z"
+  },
+
+  {
+    "id": "comment_044",
+    "reportId": "dummy_033",
+    "userId": "user_01",
+    "comment": "The smell near KP II auto stand is unbearable. Sewerage water is spreading across the walkway.",
+    "likes": 14,
+    "likedBy": ["user_01", "user_02"],
+    "createdAt": "2026-10-05T16:00:00.000Z"
+  },
+  {
+    "id": "comment_045",
+    "reportId": "dummy_033",
+    "userId": "user_02",
+    "comment": "Sanitation workers checked the line earlier today.",
+    "likes": 5,
+    "likedBy": [],
+    "createdAt": "2026-10-05T17:30:00.000Z"
+  },
+
+  {
+    "id": "comment_046",
+    "reportId": "dummy_027",
+    "userId": "user_04",
+    "comment": "Delta 1 metro roundabout intersection has zero streetlights and blind corners.",
+    "likes": 18,
+    "likedBy": ["user_04", "user_02", "user_08"],
+    "createdAt": "2026-10-05T21:45:00.000Z"
+  },
+  {
+    "id": "comment_047",
+    "reportId": "dummy_027",
+    "userId": "user_08",
+    "comment": "Reflective studs and speed breakers are urgently needed before another collision occurs.",
+    "likes": 12,
+    "likedBy": ["user_08"],
+    "createdAt": "2026-10-05T22:30:00.000Z"
+  },
+
+  {
+    "id": "comment_048",
+    "reportId": "dummy_028",
+    "userId": "user_03",
+    "comment": "100 meters of steel guardrail along the canal road is completely missing.",
+    "likes": 11,
+    "likedBy": ["user_03"],
+    "createdAt": "2026-10-04T20:10:00.000Z"
+  },
+  {
+    "id": "comment_049",
+    "reportId": "dummy_028",
+    "userId": "user_01",
+    "comment": "Vehicle veering danger is extremely high at night during fog/rain.",
+    "likes": 8,
+    "likedBy": [],
+    "createdAt": "2026-10-04T21:00:00.000Z"
+  },
+
+  {
+    "id": "comment_050",
+    "reportId": "dummy_006",
+    "userId": "user_01",
+    "comment": "Scholarship portal shows institute verified, but fund transfer status says pending with treasury.",
+    "likes": 17,
+    "likedBy": ["user_01", "user_03", "user_06"],
+    "createdAt": "2026-10-04T13:00:00.000Z"
+  }
+]

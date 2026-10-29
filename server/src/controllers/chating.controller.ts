@@ -1,42 +1,190 @@
 import { Request, Response } from "express";
+import mongoose from "mongoose";
 import requiredInfo from "../data/reqInfo.json";
+import initialDummyReports from "../data/dummyData.json";
+import initialDummyUsers from "../data/dummyUsers.json";
+import initialDummyComments from "../data/dummyComments.json";
 import { ReportDraft } from "../repository/set";
 import groq from "../config/groq.config";
-import { upload } from "../config/multer.config";
 import reportDetails from "../model/report";
+import Comment from "../model/comment";
+import User from "../model/user";
+import { pythonService } from "../services/pythonService";
+import { classifyGrievance } from "../services/classificationService";
+import { calculateDistanceKm } from "./depart.controller";
+import departmentData from "../data/departmentData.json";
+import departUsersData from "../data/departUsers.json";
 
-let initialReportDraft: ReportDraft = {
+// In-memory runtime copies of dummy data so JSON files on disk are never mutated
+export let runtimeDummyReports: any[] = JSON.parse(JSON.stringify(initialDummyReports)).map((r: any) => ({
+  ...r,
+  sensitivity: r.sensitivity || {
+    status: "non_sensitive",
+    reason: "Public infrastructure or standard civic administration issue suitable for community visibility.",
+    classifiedAt: new Date(r.createdAt || "2026-10-01T00:00:00.000Z"),
+    classificationVersion: "1.0.0",
+  },
+}));
+
+export function isDepartmentAuthorizedForReport(departId: string, report: any): boolean {
+  const departments: any[] = (departmentData as any[]) || (departUsersData as any).departments || [];
+  const dept = departments.find((d: any) => d.departmentId === departId);
+  if (!dept) return false;
+
+  if (dept.category !== report.category) return false;
+
+  const subcatMatch = Array.isArray(dept.subcategories) && dept.subcategories.some(
+    (sc: string) => sc.toLowerCase() === (report.subcategory || "").toLowerCase()
+  );
+  if (!subcatMatch) return false;
+
+  if (dept.category === "Public Infrastructure") {
+    const deptLat = dept.location?.latitude;
+    const deptLng = dept.location?.longitude;
+    const serviceRadiusKm = dept.location?.radiusKm ?? dept.location?.radius ?? 10;
+    if (typeof deptLat === "number" && typeof deptLng === "number") {
+      const repLat = parseFloat(report.location?.latitude);
+      const repLng = parseFloat(report.location?.longitude);
+      if (isNaN(repLat) || isNaN(repLng)) return false;
+      const dist = calculateDistanceKm(deptLat, deptLng, repLat, repLng);
+      return dist <= serviceRadiusKm;
+    }
+  }
+
+  return true;
+}
+export let runtimeDummyComments: any[] = JSON.parse(JSON.stringify(initialDummyComments));
+export let runtimeDummyUsers: any[] = JSON.parse(JSON.stringify(initialDummyUsers));
+
+export const createFreshReportDraft = (): ReportDraft => ({
   category: null,
   subcategory: null,
-
   problemDescription: null,
   location: {
     address: null,
     latitude: null,
     longitude: null,
   },
-
   issueType: null,
   serviceOrScheme: null,
-
   relevantDateOrDuration: null,
   applicationStatus: null,
-
   evidence: null,
-
   riskOrUrgency: null,
   impact: null,
   desiredResolution: null,
-};
+  affectedPeople: null,
+});
+
+export let initialReportDraft: ReportDraft = createFreshReportDraft();
+
+function extractJsonFromText(text: string): any {
+  try {
+    return JSON.parse(text);
+  } catch {
+    // Strip markdown fences if present
+    const cleaned = text.replace(/```(?:json)?/gi, "").replace(/```/g, "").trim();
+    try {
+      return JSON.parse(cleaned);
+    } catch {
+      const firstBrace = cleaned.indexOf("{");
+      const lastBrace = cleaned.lastIndexOf("}");
+      if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+        return JSON.parse(cleaned.substring(firstBrace, lastBrace + 1));
+      }
+      throw new Error("Unable to parse AI response as JSON");
+    }
+  }
+}
+
+export async function normalizeReportDraftToEnglish(draft: ReportDraft | any): Promise<ReportDraft | any> {
+  const textFieldsToInspect: (keyof ReportDraft)[] = [
+    "problemDescription",
+    "issueType",
+    "relevantDateOrDuration",
+    "riskOrUrgency",
+    "impact",
+    "desiredResolution",
+    "affectedPeople",
+  ];
+
+  // Inspect if any field contains Devanagari or typical Hinglish markers
+  const needsNormalization = textFieldsToInspect.some((field) => {
+    const val = draft[field];
+    if (typeof val === "string" && val.trim()) {
+      if (/[\u0900-\u097F]/.test(val)) return true;
+      if (
+        /\b(hai|hain|nahi|nhi|raha|rahi|rahe|tha|thi|the|kafi|bohot|bahut|kharab|ghadha|gaddha|gadha|paani|pani|bijli|sadak|mera|meri|mere|aur|bhi|kripya|jaldi|karo|hone|wala|wali|wale|hote|hota|hoti)\b/i.test(
+          val
+        )
+      ) {
+        return true;
+      }
+    }
+    return false;
+  });
+
+  if (!needsNormalization) {
+    return draft;
+  }
+
+  try {
+    const prompt = `You are an official civic data language normalizer for JanSetu in India.
+Your task is to take the provided grievance fields and translate any Hindi (Devanagari) or Hinglish (Roman Hindi) text into clear, objective, formal English.
+
+STRICT NORMALIZATION RULES:
+1. Translate all Hindi or Hinglish phrases in problemDescription, issueType, relevantDateOrDuration, riskOrUrgency, impact, desiredResolution, and affectedPeople into professional English.
+2. PRESERVE exact proper nouns, landmark names, street names, local area names (e.g. "Pari Chowk", "Knowledge Park", "Surajpur"), personal names, and official document/application numbers without altering them.
+3. PRESERVE all factual details (dates, days, numbers, severity). DO NOT invent, exaggerate, or omit any facts.
+4. Return ONLY a valid JSON object matching the input fields with normalized English values.
+
+Input fields to normalize:
+${JSON.stringify(
+  {
+    problemDescription: draft.problemDescription,
+    issueType: draft.issueType,
+    relevantDateOrDuration: draft.relevantDateOrDuration,
+    riskOrUrgency: draft.riskOrUrgency,
+    impact: draft.impact,
+    desiredResolution: draft.desiredResolution,
+    affectedPeople: draft.affectedPeople,
+  },
+  null,
+  2
+)}`;
+
+    const completion = await groq.chat.completions.create({
+      model: "openai/gpt-oss-120b",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.1,
+      max_completion_tokens: 800,
+      response_format: { type: "json_object" },
+    });
+
+    const content = completion.choices[0]?.message?.content;
+    if (content) {
+      const parsed = extractJsonFromText(content);
+      const updatedDraft = { ...draft };
+      for (const field of textFieldsToInspect) {
+        if (typeof parsed[field] === "string" && parsed[field].trim()) {
+          (updatedDraft as any)[field] = parsed[field].trim();
+        }
+      }
+      return updatedDraft;
+    }
+  } catch (err) {
+    console.error("Language normalization error:", err);
+  }
+  return draft;
+}
 
 export const collectingInfo = async (req: Request, res: Response) => {
   try {
     /*
     |--------------------------------------------------------------------------
-    | 1. GET LATEST CITIZEN MESSAGE
+    | 1. GET CITIZEN MESSAGE & REPORT DRAFT & CONVERSATION HISTORY
     |--------------------------------------------------------------------------
     */
-
     const latestCitizenMessage =
       typeof req.body.data === "string" ? req.body.data.trim() : "";
 
@@ -47,316 +195,15 @@ export const collectingInfo = async (req: Request, res: Response) => {
       });
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | 2. GET CURRENT CATEGORY + SUBCATEGORY
-    |--------------------------------------------------------------------------
-    */
-
-    const currentCategory = initialReportDraft.category;
-
-    const currentSubcategory = initialReportDraft.subcategory;
-
-    /*
-    |--------------------------------------------------------------------------
-    | 3. GET ONLY RELEVANT REQUIRED FIELDS
-    |--------------------------------------------------------------------------
-    |
-    | We do NOT send the complete reqInfo.json to Groq.
-    |
-    | If category + subcategory are already known,
-    | get only their requiredFields.
-    |--------------------------------------------------------------------------
-    */
-
-    let requiredFields: string[] = [];
-
-    if (currentCategory && currentSubcategory) {
-      requiredFields =
-        (requiredInfo as any).categories?.[currentCategory]?.subcategories?.[
-          currentSubcategory
-        ]?.requiredFields ?? [];
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | 4. IF CATEGORY/SUBCATEGORY ARE NOT KNOWN
-    |--------------------------------------------------------------------------
-    |
-    | Only send category + subcategory names.
-    | Don't send the complete requiredInfo JSON.
-    |--------------------------------------------------------------------------
-    */
-
-    let categoryOptions: any = null;
-
-    if (!currentCategory || !currentSubcategory) {
-      categoryOptions = Object.entries((requiredInfo as any).categories).map(
-        ([category, data]: any) => ({
-          category,
-          subcategories: Object.keys(data.subcategories),
-        })
-      );
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | 5. SMALL SYSTEM PROMPT
-    |--------------------------------------------------------------------------
-    */
-
-    const systemPrompt = `
-You are the AI assistant for a Citizen Voice and Accountability
-Intelligence Platform in India.
-
-Your job is to collect information from the citizen and maintain
-the grievance report.
-
-IMPORTANT RULES:
-
-1. Ask exactly ONE follow-up question at a time.
-
-2. Extract only facts explicitly provided by the citizen.
-Never invent information.
-
-3. Use the current report draft to know what information has
-already been collected.
-
-4. Do not ask for information that is already available.
-
-5. Only ask about fields listed in requiredFields.
-
-6. reportDraft values must be written in clear English.
-
-7. assistantMessage must use the same language/style as the
-latest citizen message.
-
-8. If the latest citizen message is Hindi, respond in Hindi.
-
-9. If the latest citizen message is English, respond in English.
-
-10. If the latest citizen message is Hinglish/mixed, respond
-naturally in Hinglish/mixed style.
-
-11. Never invent latitude or longitude.
-
-12. Location is complete only when address, latitude and longitude
-are all available.
-
-13. Never invent evidence.
-
-14. Do not infer risk, urgency, impact, duration, severity,
-application status, or desired resolution.
-
-15. problemDescription must contain only facts provided by
-the citizen. If new relevant facts are provided, update it.
-
-16. If multiple pieces of information are provided in one message,
-extract all of them, but ask only ONE next question.
-
-17. If all required information is collected, provide a concise
-summary and ask the citizen to review it.
-
-18. Do not claim that the grievance has been submitted.
-
-ASSISTANT MESSAGE LANGUAGE RULE
-- Only assistantMessage should follow the language of the latest citizen message.
-- If the citizen asks in Hindi, generate assistantMessage in Hindi using Devanagari script only.
-- If the citizen asks in Hinglish, understand the meaning but generate assistantMessage in Hindi using Devanagari script only.
-- If the citizen asks in English, generate assistantMessage in English.
-- All other output fields (reportDraft, missingRequiredFields, aiQueryType, isComplete, etc.) must always remain in English.
-- Do not translate field names or JSON keys.
-
-AI QUERY TYPE:
-
-Use "location" when asking for:
-- address
-- locality
-- road/street
-- landmark
-- map location
-- GPS
-- latitude/longitude
-- location confirmation
-
-Use "evidence" when asking for:
-- photo
-- video
-- document
-- screenshot
-- supporting evidence
-
-Use "general" for all other questions.
-
-Return ONLY valid JSON:
-
-{
-  "assistantMessage": "",
-  "reportDraft": {},
-  "missingRequiredFields": [],
-  "isComplete": false,
-  "aiQueryType": "general"
-}
-`;
-
-    /*
-    |--------------------------------------------------------------------------
-    | 6. BUILD SMALL CONTEXT FOR GROQ
-    |--------------------------------------------------------------------------
-    |
-    | We send:
-    |
-    | - current draft
-    | - relevant required fields
-    | - category options ONLY when necessary
-    | - latest citizen message
-    |
-    | We DO NOT send:
-    |
-    | - complete reqInfo.json
-    | - complete conversation history
-    |--------------------------------------------------------------------------
-    */
-
-    const contextForAI: any = {
-      currentReportDraft: initialReportDraft,
-
-      requiredFields,
-
-      latestCitizenMessage,
-    };
-
-    if (categoryOptions) {
-      contextForAI.categoryOptions = categoryOptions;
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | 7. CALL GROQ
-    |--------------------------------------------------------------------------
-    */
-
-    const completion = await groq.chat.completions.create({
-      model: "openai/gpt-oss-120b",
-
-      messages: [
-        {
-          role: "system",
-          content: systemPrompt,
-        },
-        {
-          role: "user",
-          content: JSON.stringify(contextForAI),
-        },
-      ],
-
-      temperature: 0.2,
-
-      max_completion_tokens: 1000,
-
-      response_format: {
-        type: "json_object",
-      },
-    });
-
-    /*
-    |--------------------------------------------------------------------------
-    | 8. GET AI RESPONSE
-    |--------------------------------------------------------------------------
-    */
-
-    const content = completion.choices[0]?.message?.content;
-
-    if (!content) {
-      throw new Error("Groq returned an empty response.");
-    }
-
-    const result = JSON.parse(content);
-
-    /*
-    |--------------------------------------------------------------------------
-    | 9. MERGE AI REPORT DRAFT INTO SERVER DRAFT
-    |--------------------------------------------------------------------------
-    |
-    | This is the important part:
-    |
-    | Frontend DOES NOT send reportDraft.
-    |
-    | Backend already has initialReportDraft.
-    |
-    |--------------------------------------------------------------------------
-    */
-
-    initialReportDraft = {
-      ...initialReportDraft,
-      ...result.reportDraft,
-    };
-
-    /*
-    |--------------------------------------------------------------------------
-    | 10. LOCATION MERGE
-    |--------------------------------------------------------------------------
-    |
-    | Prevent null values returned by AI from accidentally
-    | destroying existing location information.
-    |--------------------------------------------------------------------------
-    */
-
-    if (result.reportDraft?.location) {
-      initialReportDraft.location = {
-        address:
-          result.reportDraft.location.address ??
-          initialReportDraft.location?.address ??
-          null,
-
-        latitude:
-          result.reportDraft.location.latitude ??
-          initialReportDraft.location?.latitude ??
-          null,
-
-        longitude:
-          result.reportDraft.location.longitude ??
-          initialReportDraft.location?.longitude ??
-          null,
-      };
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | 11. GET FINAL CATEGORY/SUBCATEGORY
-    |--------------------------------------------------------------------------
-    */
-
-    const finalCategory = initialReportDraft.category;
-
-    const finalSubcategory = initialReportDraft.subcategory;
-
-    /*
-    |--------------------------------------------------------------------------
-    | 12. GET FINAL REQUIRED FIELDS FROM BACKEND
-    |--------------------------------------------------------------------------
-    */
-
-    let finalRequiredFields: string[] = [];
-
-    if (finalCategory && finalSubcategory) {
-      finalRequiredFields =
-        (requiredInfo as any).categories?.[finalCategory]?.subcategories?.[
-          finalSubcategory
-        ]?.requiredFields ?? [];
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | 13. SET NOT REQUIRED FIELDS,
-    |--------------------------------------------------------------------------
-    |
-    | Backend knows which fields are not required.
-    | No need to make the AI do this.
-    |--------------------------------------------------------------------------
-    */
-
-    const allFields = [
+    // Initialize or adopt incoming draft
+    let currentDraft: ReportDraft = req.body.reportDraft
+      ? { ...createFreshReportDraft(), ...req.body.reportDraft }
+      : (req.session as any)?.reportDraft
+      ? { ...createFreshReportDraft(), ...(req.session as any).reportDraft }
+      : { ...initialReportDraft };
+
+    // Clean up any stale "notrequired" string pollution in incoming draft
+    const allKnownFields = [
       "problemDescription",
       "location",
       "issueType",
@@ -367,130 +214,369 @@ Return ONLY valid JSON:
       "riskOrUrgency",
       "impact",
       "desiredResolution",
+      "affectedPeople",
     ];
-
-    for (const field of allFields) {
-      if (!finalRequiredFields.includes(field)) {
-        (initialReportDraft as any)[field] = "notrequired";
+    for (const f of allKnownFields) {
+      if (
+        typeof (currentDraft as any)[f] === "string" &&
+        (currentDraft as any)[f].trim().toLowerCase() === "notrequired"
+      ) {
+        (currentDraft as any)[f] = null;
       }
+    }
+
+    // Extract recent conversation history (last 8 messages)
+    const rawMessages = Array.isArray(req.body.messages) ? req.body.messages : [];
+    const recentMessages = rawMessages
+      .slice(-8)
+      .map((m: any) => ({
+        role: m.role === "assistant" ? "assistant" : "citizen",
+        text: typeof m.text === "string" ? m.text : typeof m.content === "string" ? m.content : "",
+      }))
+      .filter((m: any) => m.text.trim() !== "");
+
+    /*
+    |--------------------------------------------------------------------------
+    | 2. CATEGORY, SUBCATEGORY & REQUIRED FIELDS FROM reqInfo.json
+    |--------------------------------------------------------------------------
+    */
+    const currentCategory = currentDraft.category;
+    const currentSubcategory = currentDraft.subcategory;
+
+    let requiredFields: string[] = [];
+    if (currentCategory && currentSubcategory) {
+      requiredFields =
+        (requiredInfo as any).categories?.[currentCategory]?.subcategories?.[
+          currentSubcategory
+        ]?.requiredFields ?? [];
+    }
+
+    const categoryOptions = Object.entries((requiredInfo as any).categories).map(
+      ([catName, catData]: any) => ({
+        category: catName,
+        subcategories: Object.keys(catData.subcategories),
+      })
+    );
+
+    /*
+    |--------------------------------------------------------------------------
+    | 3. SYSTEM PROMPT
+    |--------------------------------------------------------------------------
+    */
+    const systemPrompt = `
+You are MargDarshak AI, the official grievance assistant for JanSetu — a Citizen Voice and Accountability Intelligence Platform in India.
+
+Your objective is to help citizens prepare an accurate, structured grievance report through natural conversation.
+
+STRICT CONVERSATION & LANGUAGE NORMALIZATION RULES:
+1. Ask exactly ONE focused follow-up question at a time.
+2. Extract only facts explicitly provided by the citizen. Never invent or assume facts, coordinates, dates, or file uploads.
+3. Use the currentReportDraft to see what information has already been collected.
+4. Use recentConversation to understand the context of the citizen's latest response (e.g. if they answer a previous question with a short answer like "Yes", "Near city hall", "last week", or make a correction).
+5. If category or subcategory is unknown or requires refinement, use the provided categoryOptions to guide or infer the correct category and subcategory based on the citizen's complaint.
+6. Once category and subcategory are set, ask only about fields in requiredFields that are still missing.
+7. If the citizen provides multiple pieces of information in a single message, extract all of them into reportDraft, and ask only ONE next question.
+8. If the citizen corrects previously provided information, update the relevant field in reportDraft.
+9. LANGUAGE NORMALIZATION: The citizen is free to communicate in Hindi (Devanagari), Hinglish (Roman Hindi), or English. However, ALL reportDraft free-text fields (problemDescription, issueType, relevantDateOrDuration, riskOrUrgency, impact, desiredResolution, affectedPeople) MUST ALWAYS be written in clear, objective English. NEVER put raw Hindi or Hinglish phrases into reportDraft.
+10. PRESERVE proper nouns, personal names, specific street/locality names, landmark names (e.g. "Pari Chowk", "Knowledge Park II", "Sector 62"), and official reference numbers without altering them.
+11. If the latest citizen message is in Hindi or Hinglish, generate assistantMessage in natural Hindi using Devanagari script. If the citizen wrote in English, respond in English.
+12. Set targetedField to the specific field name from requiredFields (or "location", "evidence", "category", "subcategory") that your assistantMessage is currently asking for. If all required fields are collected, set targetedField to null.
+13. Never invent latitude or longitude. A location can only have numeric coordinates if explicitly provided or fetched.
+14. If all required fields are collected, write a concise summary in assistantMessage asking the citizen to review their completed report.
+
+Return ONLY a valid JSON object matching this schema:
+{
+  "assistantMessage": "Follow-up question or review message",
+  "reportDraft": {
+    "category": string or null,
+    "subcategory": string or null,
+    "problemDescription": string or null,
+    "location": {
+      "address": string or null,
+      "latitude": number or null,
+      "longitude": number or null
+    },
+    "issueType": string or null,
+    "serviceOrScheme": string or null,
+    "relevantDateOrDuration": string or null,
+    "applicationStatus": string or null,
+    "evidence": array or null,
+    "riskOrUrgency": string or null,
+    "impact": string or null,
+    "desiredResolution": string or null,
+    "affectedPeople": string or null
+  },
+  "targetedField": "problemDescription" | "location" | "issueType" | "serviceOrScheme" | "relevantDateOrDuration" | "applicationStatus" | "evidence" | "riskOrUrgency" | "impact" | "desiredResolution" | "affectedPeople" | "category" | "subcategory" | null,
+  "aiQueryType": "location" | "evidence" | "general"
+}
+`;
+
+    /*
+    |--------------------------------------------------------------------------
+    | 4. CALL GROQ
+    |--------------------------------------------------------------------------
+    */
+    const contextForAI: any = {
+      currentReportDraft: currentDraft,
+      requiredFields,
+      categoryOptions,
+      recentConversation: recentMessages,
+      latestCitizenMessage,
+    };
+
+    let result: any = null;
+    try {
+      const completion = await groq.chat.completions.create({
+        model: "openai/gpt-oss-120b",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: JSON.stringify(contextForAI) },
+        ],
+        temperature: 0.2,
+        max_completion_tokens: 1200,
+        response_format: { type: "json_object" },
+      });
+
+      const content = completion.choices[0]?.message?.content;
+      if (!content) {
+        throw new Error("Groq returned an empty response.");
+      }
+      result = extractJsonFromText(content);
+    } catch (apiError: any) {
+      console.error("Groq API completion error:", apiError);
+      // Graceful fallback response when LLM call encounters transient issue
+      result = {
+        assistantMessage:
+          "I understood your details. Could you please share the next detail, such as the exact location or problem description?",
+        reportDraft: currentDraft,
+        targetedField: requiredFields[0] || "problemDescription",
+        aiQueryType: "general",
+      };
     }
 
     /*
     |--------------------------------------------------------------------------
-    | 14. CHECK FIELD COMPLETION
+    | 5. MERGE AI REPORT DRAFT INTO CURRENT DRAFT SAFELY
     |--------------------------------------------------------------------------
     */
+    const aiDraft = result.reportDraft || {};
 
-    const isFieldComplete = (field: string): boolean => {
-      /*
-      | LOCATION
-      */
-
-      if (field === "location") {
-        const location = initialReportDraft.location;
-
-        return (
-          typeof location?.address === "string" &&
-          location.address.trim() !== "" &&
-          typeof location?.latitude === "number" &&
-          Number.isFinite(location.latitude) &&
-          typeof location?.longitude === "number" &&
-          Number.isFinite(location.longitude)
-        );
+    // Validate category and subcategory against reqInfo.json
+    if (aiDraft.category && (requiredInfo as any).categories?.[aiDraft.category]) {
+      currentDraft.category = aiDraft.category;
+      if (
+        aiDraft.subcategory &&
+        (requiredInfo as any).categories[aiDraft.category]?.subcategories?.[aiDraft.subcategory]
+      ) {
+        currentDraft.subcategory = aiDraft.subcategory;
       }
+    }
 
-      /*
-      | EVIDENCE
-      */
+    // Merge standard text fields
+    const textFields = [
+      "problemDescription",
+      "issueType",
+      "serviceOrScheme",
+      "relevantDateOrDuration",
+      "applicationStatus",
+      "riskOrUrgency",
+      "impact",
+      "desiredResolution",
+      "affectedPeople",
+    ];
 
-      if (field === "evidence") {
-        return (
-          Array.isArray(initialReportDraft.evidence) &&
-          initialReportDraft.evidence.length > 0
-        );
+    for (const field of textFields) {
+      if (typeof aiDraft[field] === "string" && aiDraft[field].trim() !== "") {
+        const val = aiDraft[field].trim();
+        if (val.toLowerCase() !== "notrequired") {
+          (currentDraft as any)[field] = val;
+        }
       }
+    }
 
-      /*
-      | NORMAL FIELD
-      */
+    // Merge location safely without wiping existing coordinates
+    if (aiDraft.location) {
+      const existingLoc = currentDraft.location || { address: null, latitude: null, longitude: null };
+      const newAddress =
+        typeof aiDraft.location.address === "string" && aiDraft.location.address.trim() !== ""
+          ? aiDraft.location.address.trim()
+          : existingLoc.address;
 
-      const value = (initialReportDraft as any)[field];
+      const newLat =
+        typeof aiDraft.location.latitude === "number" && Number.isFinite(aiDraft.location.latitude)
+          ? aiDraft.location.latitude
+          : existingLoc.latitude;
 
-      if (value === null || value === undefined) {
-        return false;
-      }
+      const newLng =
+        typeof aiDraft.location.longitude === "number" && Number.isFinite(aiDraft.location.longitude)
+          ? aiDraft.location.longitude
+          : existingLoc.longitude;
 
-      if (typeof value === "string") {
-        return value.trim() !== "" && value !== "notrequired";
-      }
+      currentDraft.location = {
+        address: newAddress ?? null,
+        latitude: newLat ?? null,
+        longitude: newLng ?? null,
+      };
+    }
 
-      return true;
-    };
+    // Merge evidence array safely
+    if (Array.isArray(aiDraft.evidence) && aiDraft.evidence.length > 0) {
+      const existingEv = Array.isArray(currentDraft.evidence) ? currentDraft.evidence : [];
+      const evMap = new Map();
+      existingEv.forEach((item: any) => {
+        if (item?.url) evMap.set(item.url, item);
+      });
+      aiDraft.evidence.forEach((item: any) => {
+        if (item?.url) evMap.set(item.url, item);
+      });
+      currentDraft.evidence = Array.from(evMap.values());
+    }
 
     /*
     |--------------------------------------------------------------------------
-    | 15. CALCULATE MISSING FIELDS
+    | 6. RE-CALCULATE AUTHORITATIVE REQUIRED FIELDS & COMPLETION FROM BACKEND
     |--------------------------------------------------------------------------
     */
+    const finalCategory = currentDraft.category;
+    const finalSubcategory = currentDraft.subcategory;
+
+    let finalRequiredFields: string[] = [];
+    if (finalCategory && finalSubcategory) {
+      finalRequiredFields =
+        (requiredInfo as any).categories?.[finalCategory]?.subcategories?.[
+          finalSubcategory
+        ]?.requiredFields ?? [];
+    }
+
+    // Helper to test if a required field is completed
+    const isFieldComplete = (field: string): boolean => {
+      if (field === "location") {
+        const loc = currentDraft.location;
+        if (!loc) return false;
+        const hasAddress = typeof loc.address === "string" && loc.address.trim() !== "";
+        const hasCoords =
+          typeof loc.latitude === "number" &&
+          Number.isFinite(loc.latitude) &&
+          typeof loc.longitude === "number" &&
+          Number.isFinite(loc.longitude);
+
+        // For Public Infrastructure, spatial routing within 10 KM requires coordinates
+        if (finalCategory === "Public Infrastructure") {
+          return hasAddress && hasCoords;
+        }
+        return hasAddress || hasCoords;
+      }
+
+      if (field === "evidence") {
+        return Array.isArray(currentDraft.evidence) && currentDraft.evidence.length > 0;
+      }
+
+      const value = (currentDraft as any)[field];
+      if (value === null || value === undefined) return false;
+      if (typeof value === "string") {
+        return value.trim() !== "" && value.trim().toLowerCase() !== "notrequired";
+      }
+      return true;
+    };
+
+    // Clean any non-applicable fields to null (do NOT use "notrequired" strings)
+    for (const field of allKnownFields) {
+      if (!finalRequiredFields.includes(field)) {
+        if (
+          typeof (currentDraft as any)[field] === "string" &&
+          (currentDraft as any)[field].toLowerCase() === "notrequired"
+        ) {
+          (currentDraft as any)[field] = null;
+        }
+      }
+    }
 
     const missingRequiredFields = finalRequiredFields.filter(
       (field) => !isFieldComplete(field)
     );
 
-    /*
-    |--------------------------------------------------------------------------
-    | 16. CALCULATE COMPLETION
-    |--------------------------------------------------------------------------
-    */
-
     const isComplete =
-      finalRequiredFields.length > 0 && missingRequiredFields.length === 0;
+      Boolean(finalCategory && finalSubcategory) &&
+      finalRequiredFields.length > 0 &&
+      missingRequiredFields.length === 0;
 
     /*
     |--------------------------------------------------------------------------
-    | 17. VALIDATE AI QUERY TYPE
+    | 7. AUTHORITATIVE REQUESTED INPUT TYPE & FIELD
     |--------------------------------------------------------------------------
     */
+    let requestedInputType: "text" | "location" | "image" | "document" | "evidence" | "date" | "selection" | "general" = "text";
+    let requestedField: string | null = null;
+    let aiQueryType = "general";
 
-    let aiQueryType = result.aiQueryType;
+    if (!isComplete) {
+      const targeted = result.targetedField;
+      const activeField =
+        targeted && missingRequiredFields.includes(targeted)
+          ? targeted
+          : missingRequiredFields[0] ||
+            (!finalCategory ? "category" : !finalSubcategory ? "subcategory" : null);
 
-    if (
-      aiQueryType !== "location" &&
-      aiQueryType !== "evidence" &&
-      aiQueryType !== "general"
-    ) {
-      aiQueryType = "general";
+      requestedField = activeField;
+
+      if (activeField === "location") {
+        requestedInputType = "location";
+        aiQueryType = "location";
+      } else if (activeField === "evidence") {
+        aiQueryType = "evidence";
+        if (
+          finalCategory === "Public Infrastructure" ||
+          finalSubcategory?.toLowerCase().includes("road") ||
+          finalSubcategory?.toLowerCase().includes("street") ||
+          finalSubcategory?.toLowerCase().includes("damage")
+        ) {
+          requestedInputType = "image";
+        } else if (
+          finalCategory === "Administrative Processes" ||
+          finalSubcategory?.toLowerCase().includes("certificate") ||
+          finalSubcategory?.toLowerCase().includes("passport") ||
+          finalSubcategory?.toLowerCase().includes("record")
+        ) {
+          requestedInputType = "document";
+        } else {
+          requestedInputType = "evidence";
+        }
+      } else if (activeField === "relevantDateOrDuration") {
+        requestedInputType = "date";
+        aiQueryType = "general";
+      } else if (activeField === "category" || activeField === "subcategory") {
+        requestedInputType = "selection";
+        aiQueryType = "general";
+      } else {
+        requestedInputType = "text";
+        aiQueryType = "general";
+      }
     }
 
     /*
     |--------------------------------------------------------------------------
-    | 18. FINAL RESULT
+    | 8. SAVE STATE & RETURN RESPONSE
     |--------------------------------------------------------------------------
     */
+    if (isComplete) {
+      currentDraft = await normalizeReportDraftToEnglish(currentDraft);
+    }
+
+    if (req.session) {
+      (req.session as any).reportDraft = currentDraft;
+    }
+    initialReportDraft = currentDraft;
 
     const finalResult = {
       assistantMessage: result.assistantMessage ?? "",
-
-      reportDraft: initialReportDraft,
-
+      reportDraft: currentDraft,
       missingRequiredFields,
-
+      requiredFields: finalRequiredFields,
       isComplete,
-
       aiQueryType,
+      requestedInputType,
+      requestedField,
     };
-
-    /*
-    |--------------------------------------------------------------------------
-    | 19. RESPONSE
-    |--------------------------------------------------------------------------
-    */
-
-    console.log("Updated Report Draft:", initialReportDraft);
-
-    console.log("Required Fields:", finalRequiredFields);
-
-    console.log("Missing Fields:", missingRequiredFields);
 
     return res.status(200).json({
       success: true,
@@ -501,8 +587,7 @@ Return ONLY valid JSON:
 
     return res.status(500).json({
       success: false,
-      message:
-        error?.message ?? "Something went wrong while collecting information.",
+      message: error?.message ?? "Something went wrong while collecting information.",
     });
   }
 };
@@ -554,28 +639,419 @@ export const uploadingEvedince = (req: Request, res: Response) => {
   }
 };
 
+// Helper to hydrate, validate, and enrich candidate vector matches against MongoDB & runtime reports
+async function hydrateAndFilterCandidates(candidates: any[], currentUserId?: string) {
+  const eligibleCandidates: any[] = [];
+
+  for (const cand of candidates) {
+    let report: any = null;
+    const repId = String(cand.report_id || "");
+
+    // 1. Authoritative check in MongoDB
+    if (repId.match(/^[0-9a-fA-F]{24}$/)) {
+      const doc = await reportDetails.findById(repId).lean();
+      if (doc) report = doc;
+    }
+
+    // 2. Check runtime dummy reports
+    if (!report) {
+      const dummy = runtimeDummyReports.find((r: any) => r._id === repId);
+      if (dummy) report = dummy;
+    }
+
+    if (!report) continue;
+
+    // Security check: sensitive reports must NEVER be surfaced as duplicate candidates
+    if (report.sensitivity && report.sensitivity.status === "sensitive") {
+      continue;
+    }
+
+    // 3. Eligibility check: Resolved, Closed, or Rejected grievances cannot receive community support
+    const status = report.applicationStatus || "Reported";
+    if (status === "Resolved" || status === "Rejected" || status === "Closed") {
+      continue;
+    }
+
+    const supportedByList: string[] = Array.isArray(report.supportedBy) ? report.supportedBy : [];
+    const isSupported = currentUserId ? supportedByList.includes(currentUserId) : false;
+
+    eligibleCandidates.push({
+      _id: (report._id || report.id).toString(),
+      category: report.category,
+      subcategory: report.subcategory,
+      issueType: report.issueType,
+      problemDescription: report.problemDescription,
+      location: report.location,
+      applicationStatus: report.applicationStatus,
+      supportCount: supportedByList.length,
+      isSupported,
+      distanceKm: cand.distance_km ?? null,
+      similarityScore: cand.similarity_score,
+      combinedScore: cand.combined_score,
+      source: cand.source,
+      evidence: report.evidence || [],
+    });
+  }
+
+  return eligibleCandidates;
+}
+
+export const checkSimilarReports = async (req: Request, res: Response) => {
+  try {
+    const sessionUserId = (req.session as any)?.userId;
+    const { category, subcategory, problemDescription, issueType, location } = req.body;
+
+    if (category !== "Public Infrastructure" || !problemDescription) {
+      return res.status(200).json({
+        success: true,
+        similarFound: false,
+        candidates: [],
+      });
+    }
+
+    const radiusKm = Number(process.env.SEMANTIC_SEARCH_RADIUS_KM) || 10;
+    const threshold = Number(process.env.SEMANTIC_SIMILARITY_THRESHOLD) || 0.40;
+
+    const searchRes = await pythonService.searchSimilar({
+      category: "Public Infrastructure",
+      subcategory,
+      problemDescription,
+      issueType,
+      location,
+      radius_km: radiusKm,
+      limit: 5,
+      threshold,
+    });
+
+    if (!searchRes.success || searchRes.candidates.length === 0) {
+      return res.status(200).json({
+        success: true,
+        similarFound: false,
+        candidates: [],
+      });
+    }
+
+    const eligibleCandidates = await hydrateAndFilterCandidates(searchRes.candidates, sessionUserId);
+    return res.status(200).json({
+      success: true,
+      similarFound: eligibleCandidates.length > 0,
+      candidates: eligibleCandidates,
+    });
+  } catch (error: any) {
+    console.error("checkSimilarReports error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to perform semantic search check",
+    });
+  }
+};
+
 export const reportManual = async (req: Request, res: Response) => {
   try {
-    // console.log(req.body);
-    const form = req.body.data;
-    // const reportdetails = reportDetails
-    const report = new reportDetails(form);
+    const form = req.body.data || req.body;
+    const sessionUserId = (req.session as any)?.userId;
+    const shouldSkipSimilarity = Boolean(req.body.skipSimilarityCheck || form.skipSimilarityCheck);
 
+    // Sanitize any "notrequired" strings into null
+    const sanitizedData: any = {};
+    for (const [key, value] of Object.entries(form)) {
+      if (typeof value === "string" && value.trim().toLowerCase() === "notrequired") {
+        sanitizedData[key] = null;
+      } else {
+        sanitizedData[key] = value;
+      }
+    }
+
+    // Authoritative sensitivity determination using shared Groq classification service
+    let authoritativeSensitivity = form.sensitivity;
+    if (
+      !authoritativeSensitivity ||
+      (authoritativeSensitivity.status !== "sensitive" && authoritativeSensitivity.status !== "non_sensitive") ||
+      !authoritativeSensitivity.reason
+    ) {
+      authoritativeSensitivity = await classifyGrievance(sanitizedData);
+    }
+
+    const isNonSensitive = authoritativeSensitivity.status === "non_sensitive";
+
+    // Real-Time Semantic Clustering Trigger: Public Infrastructure only, and ONLY for non-sensitive reports!
+    const isPublicInfra = sanitizedData.category === "Public Infrastructure";
+    const semanticEnabled = process.env.SEMANTIC_SEARCH_ENABLED !== "false";
+
+    if (isPublicInfra && isNonSensitive && !shouldSkipSimilarity && semanticEnabled && sanitizedData.problemDescription) {
+      try {
+        const radiusKm = Number(process.env.SEMANTIC_SEARCH_RADIUS_KM) || 10;
+        const threshold = Number(process.env.SEMANTIC_SIMILARITY_THRESHOLD) || 0.40;
+
+        const searchRes = await pythonService.searchSimilar({
+          category: "Public Infrastructure",
+          subcategory: sanitizedData.subcategory,
+          problemDescription: sanitizedData.problemDescription,
+          issueType: sanitizedData.issueType,
+          location: sanitizedData.location,
+          radius_km: radiusKm,
+          limit: 5,
+          threshold,
+        });
+
+        if (searchRes.success && searchRes.candidates.length > 0) {
+          const eligibleCandidates = await hydrateAndFilterCandidates(searchRes.candidates, sessionUserId);
+          if (eligibleCandidates.length > 0) {
+            return res.status(200).json({
+              success: true,
+              similarFound: true,
+              message: "Similar issues reported nearby",
+              candidates: eligibleCandidates,
+            });
+          }
+        }
+      } catch (searchErr: any) {
+        console.warn("Semantic clustering check encountered an error, falling back safely:", searchErr.message);
+      }
+    }
+
+    // Authoritatively normalize report text fields to English
+    const normalizedReport = await normalizeReportDraftToEnglish(sanitizedData);
+
+    const determinedCreatedBy =
+      sessionUserId ||
+      sanitizedData.createdBy ||
+      sanitizedData.userId ||
+      req.body.createdBy ||
+      req.body.userId ||
+      (req.session as any)?.user?.id ||
+      null;
+
+    const reportData = {
+      ...normalizedReport,
+      createdBy: determinedCreatedBy,
+      sensitivity: {
+        status: authoritativeSensitivity.status,
+        reason: authoritativeSensitivity.reason,
+        classifiedAt: authoritativeSensitivity.classifiedAt || new Date(),
+        classificationVersion: authoritativeSensitivity.classificationVersion || "1.0.0",
+      },
+      indexingStatus: isNonSensitive ? "pending" : "skipped",
+    };
+
+    const report = new reportDetails(reportData);
     await report.save();
-    console.log(form);
-    res.status(200).json({ success: true, message: "connected" });
+    console.log("Report created with createdBy:", determinedCreatedBy, "id:", report._id);
+
+    // Synchronize to ChromaDB vector index via Python service ONLY if non-sensitive
+    if (isNonSensitive) {
+    try {
+      const indexRes = await pythonService.indexReports([
+        {
+          id: (report._id as any).toString(),
+          source: "mongodb",
+          category: report.category,
+          subcategory: report.subcategory,
+          problemDescription: report.problemDescription,
+          location: report.location,
+          issueType: report.issueType,
+          serviceOrScheme: report.serviceOrScheme,
+          relevantDateOrDuration: report.relevantDateOrDuration,
+          applicationStatus: report.applicationStatus,
+          impact: report.impact,
+          desiredResolution: report.desiredResolution,
+          affectedPeople: report.affectedPeople,
+          riskOrUrgency: report.riskOrUrgency,
+          createdAt: report.createdAt ? (report.createdAt as Date).toISOString() : null,
+          updatedAt: report.updatedAt ? (report.updatedAt as Date).toISOString() : null,
+        },
+      ]);
+
+      if (indexRes && indexRes.success) {
+        report.indexingStatus = "indexed";
+        report.lastIndexedAt = new Date();
+        await report.save();
+      } else {
+        report.indexingStatus = "failed";
+        report.indexingError = indexRes?.errors?.join("; ") || "Indexing failed";
+        await report.save();
+      }
+    } catch (idxErr: any) {
+      console.warn("Real-time vector indexing exception:", idxErr.message);
+      report.indexingStatus = "failed";
+      report.indexingError = idxErr.message;
+      await report.save();
+    }
+
+    }
+
+    res.status(200).json({ success: true, message: "Report created successfully", report });
   } catch (error) {
     console.log(error);
     res.status(500).json({
       success: false,
-      message: "Evidence upload failed",
+      message: "Failed to submit report",
+    });
+  }
+};
+
+
+
+export const getReportById = async (req: Request, res: Response) => {
+  try {
+    const { reportId } = req.params;
+
+    let targetReport = runtimeDummyReports.find((r: any) => r._id === reportId);
+    if (!targetReport) {
+      const mongoR = await reportDetails.findById(reportId);
+      if (mongoR) {
+        targetReport = typeof mongoR.toObject === "function" ? mongoR.toObject() : mongoR;
+      }
+    }
+
+    if (!targetReport) {
+      return res.status(404).json({
+        success: false,
+        message: "Report not found",
+      });
+    }
+
+    // Access control check for sensitive reports:
+    const isSensitive = targetReport.sensitivity && targetReport.sensitivity.status === "sensitive";
+    const isUnclassified = !targetReport.sensitivity || !targetReport.sensitivity.status;
+
+    if (isSensitive || isUnclassified) {
+      const sessionUserId = (req.session as any)?.userId || (req.query.userId as string);
+      const sessionDepartId = (req.session as any)?.departId;
+
+      const isOwner = Boolean(
+        sessionUserId &&
+        (targetReport.createdBy === sessionUserId || targetReport.userId === sessionUserId)
+      );
+      const isAuthorizedDept = Boolean(
+        sessionDepartId && isDepartmentAuthorizedForReport(sessionDepartId, targetReport)
+      );
+
+      if (!isOwner && !isAuthorizedDept) {
+        return res.status(403).json({
+          success: false,
+          message:
+            "Access restricted: This grievance contains sensitive information and is only visible to the owner and authorized department personnel.",
+        });
+      }
+    }
+
+    const rId = (targetReport._id || "").toString();
+
+    const dummyCommentCount = runtimeDummyComments.filter(
+      (c: any) => (c.reportId || "").toString() === rId
+    ).length;
+
+    const mongoCommentCount = await Comment.countDocuments({ reportId: rId });
+    const commentCount = dummyCommentCount + mongoCommentCount;
+
+    let creatorUser: any = null;
+    const creatorId = targetReport.createdBy || targetReport.userId;
+    if (creatorId) {
+      const dummyU = runtimeDummyUsers.find(
+        (u: any) => u.id === creatorId || u.username === creatorId
+      );
+      if (dummyU) {
+        creatorUser = {
+          id: dummyU.id,
+          username: dummyU.username,
+          name: dummyU.name,
+          profilePhoto: dummyU.profilePhoto,
+        };
+      } else {
+        const mongoU = await User.findById(creatorId).lean();
+        if (mongoU) {
+          creatorUser = {
+            id: mongoU._id.toString(),
+            username: mongoU.username,
+            name: mongoU.name,
+            profilePhoto: mongoU.profilePhoto,
+          };
+        }
+      }
+    }
+
+    if (!creatorUser) {
+      creatorUser = {
+        id: "citizen_resident",
+        username: "citizen_resident",
+        name: "Citizen Resident",
+        profilePhoto: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+      };
+    }
+
+    const reportWithMeta = {
+      ...targetReport,
+      commentCount,
+      creator: creatorUser,
+    };
+
+    return res.status(200).json({
+      success: true,
+      report: reportWithMeta,
+    });
+  } catch (error) {
+    console.error("getReportById error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch report details",
     });
   }
 };
 
 export const getReports = async (req: Request, res: Response) => {
   try {
-    const reports = await reportDetails.find().sort({ createdAt: -1 });
+    const sessionUserId = (req.session as any)?.userId || (req.query.userId as string);
+
+    const mongoReports = await reportDetails.find().sort({ createdAt: -1 });
+
+    // Aggregate comment counts for MongoDB reports
+    const mongoCommentCounts: { [key: string]: number } = {};
+    const allMongoComments = await Comment.find({}).lean();
+    allMongoComments.forEach((c: any) => {
+      const rid = c.reportId?.toString();
+      if (rid) {
+        mongoCommentCounts[rid] = (mongoCommentCounts[rid] || 0) + 1;
+      }
+    });
+
+    const combinedReports = [...mongoReports, ...runtimeDummyReports];
+
+    // Authoritative visibility filter:
+    // 1. Non-sensitive reports are eligible for the public community feed.
+    // 2. Sensitive reports are restricted and visible ONLY to the citizen who filed them.
+    // 3. Unclassified historical reports are not made publicly visible merely because sensitivity is absent.
+    const visibleReports = combinedReports.filter((r: any) => {
+      const status = r.sensitivity?.status;
+      if (status === "non_sensitive") {
+        return true;
+      }
+      if (sessionUserId) {
+        const creatorId = r.createdBy || r.userId;
+        if (creatorId && creatorId === sessionUserId) {
+          return true;
+        }
+      }
+      return false;
+    });
+
+    // Calculate dynamic comment counts for each report without mutating JSON disk files
+    const reports = visibleReports.map((r: any) => {
+      const reportObj = typeof r.toObject === "function" ? r.toObject() : { ...r };
+      const reportId = (reportObj._id || "").toString();
+
+      const dummyCommentCount = runtimeDummyComments.filter(
+        (c: any) => (c.reportId || "").toString() === reportId
+      ).length;
+
+      const mongoCount = mongoCommentCounts[reportId] || 0;
+      const commentCount = dummyCommentCount + mongoCount;
+
+      return {
+        ...reportObj,
+        commentCount,
+      };
+    });
 
     res.status(200).json({
       success: true,
@@ -590,3 +1066,660 @@ export const getReports = async (req: Request, res: Response) => {
     });
   }
 };
+
+export const getUsers = async (req: Request, res: Response) => {
+  try {
+    return res.status(200).json({
+      success: true,
+      users: runtimeDummyUsers,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch users",
+    });
+  }
+};
+
+export const toggleSupport = async (req: Request, res: Response) => {
+  try {
+    const { reportId } = req.params;
+    const userId = (req.session as any)?.userId || req.body.userId;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Please login to continue.",
+      });
+    }
+
+    // 1. Check runtime dummy reports
+    const dummyReport = runtimeDummyReports.find((r: any) => r._id === reportId);
+    if (dummyReport) {
+      if (dummyReport.sensitivity && dummyReport.sensitivity.status === "sensitive") {
+        return res.status(403).json({
+          success: false,
+          message: "Sensitive grievances are restricted and not eligible for public community support.",
+        });
+      }
+
+      // Eligibility check: Resolved or Rejected reports cannot receive community support
+      const currentStatus = dummyReport.applicationStatus || "Reported";
+      if (currentStatus === "Resolved" || currentStatus === "Rejected") {
+        return res.status(400).json({
+          success: false,
+          message: "Resolved or closed grievances are no longer eligible for community support.",
+        });
+      }
+
+      if (!Array.isArray(dummyReport.supportedBy)) {
+        dummyReport.supportedBy = [];
+      }
+      const existingIndex = dummyReport.supportedBy.indexOf(userId);
+      let supported = false;
+      if (existingIndex !== -1) {
+        dummyReport.supportedBy.splice(existingIndex, 1);
+        supported = false;
+      } else {
+        dummyReport.supportedBy.push(userId);
+        supported = true;
+      }
+      return res.status(200).json({
+        success: true,
+        supported,
+        supportCount: dummyReport.supportedBy.length,
+        supportedBy: dummyReport.supportedBy,
+        message: supported ? "Thank you for supporting this community issue!" : "Support removed.",
+      });
+    }
+
+    // 2. Authoritative check in MongoDB
+    const mongoReport = await reportDetails.findById(reportId);
+    if (!mongoReport) {
+      return res.status(404).json({
+        success: false,
+        message: "Report not found",
+      });
+    }
+
+    if (mongoReport.sensitivity && mongoReport.sensitivity.status === "sensitive") {
+      return res.status(403).json({
+        success: false,
+        message: "Sensitive grievances are restricted and not eligible for public community support.",
+      });
+    }
+
+    // Eligibility check
+    const currentStatus = mongoReport.applicationStatus || "Reported";
+    if (currentStatus === "Resolved" || currentStatus === "Rejected") {
+      return res.status(400).json({
+        success: false,
+        message: "Resolved or closed grievances are no longer eligible for community support.",
+      });
+    }
+
+    const currentSupportedBy: string[] = Array.isArray(mongoReport.supportedBy) ? mongoReport.supportedBy : [];
+    const isAlreadySupported = currentSupportedBy.includes(userId);
+    let supported = false;
+
+    if (isAlreadySupported) {
+      // Atomic removal
+      await reportDetails.updateOne(
+        { _id: mongoReport._id },
+        { $pull: { supportedBy: userId } }
+      );
+      supported = false;
+    } else {
+      // Atomic addition preventing concurrent duplicate support
+      await reportDetails.updateOne(
+        { _id: mongoReport._id },
+        { $addToSet: { supportedBy: userId } }
+      );
+      supported = true;
+    }
+
+    const updated = await reportDetails.findById(reportId).lean();
+    const finalSupporters = (updated?.supportedBy as string[]) || [];
+
+    return res.status(200).json({
+      success: true,
+      supported,
+      supportCount: finalSupporters.length,
+      supportedBy: finalSupporters,
+      message: supported ? "Thank you for supporting this community issue!" : "Support removed.",
+    });
+  } catch (error) {
+    console.error("toggleSupport error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to toggle report support",
+    });
+  }
+};
+
+export const getComments = async (req: Request, res: Response) => {
+  try {
+    const { reportId } = req.params;
+    const sort = typeof req.query.sort === "string" ? req.query.sort.toLowerCase() : "top";
+    const currentUserId = (req.session as any)?.userId || (req.query.userId as string) || "";
+
+    const isMongoConnected = mongoose.connection.readyState === 1;
+
+    // Access control: comments on sensitive reports are restricted to report owner & assigned department
+    let targetReport = runtimeDummyReports.find((r: any) => r._id === reportId);
+    if (!targetReport && isMongoConnected) {
+      targetReport = await reportDetails.findById(reportId).lean();
+    }
+    if (targetReport && targetReport.sensitivity && targetReport.sensitivity.status === "sensitive") {
+      const isOwner = Boolean(
+        currentUserId &&
+        (targetReport.createdBy === currentUserId || targetReport.userId === currentUserId)
+      );
+      const sessionDepartId = (req.session as any)?.departId;
+      const isAuthorizedDept = Boolean(
+        sessionDepartId && isDepartmentAuthorizedForReport(sessionDepartId, targetReport)
+      );
+      if (!isOwner && !isAuthorizedDept) {
+        return res.status(403).json({
+          success: false,
+          message: "Access restricted: Comments on sensitive reports are not publicly accessible.",
+        });
+      }
+    }
+
+    const dummyComms = runtimeDummyComments.filter((c: any) => c.reportId === reportId);
+    const mongoComms = isMongoConnected ? await Comment.find({ reportId }).lean() : [];
+
+    const allComms = [...dummyComms, ...mongoComms];
+
+    // Fetch MongoDB users for enrichment
+    const mongoUsers = isMongoConnected ? await User.find({}).lean() : [];
+    const mongoUserMap: { [key: string]: any } = {};
+    mongoUsers.forEach((u: any) => {
+      mongoUserMap[u._id.toString()] = u;
+    });
+
+    // Helper to extract author information
+    const getAuthor = (userId: string) => {
+      const dummyU = runtimeDummyUsers.find(
+        (user: any) => user.id === userId || user.username === userId
+      );
+      const mongoU = mongoUserMap[userId];
+      const u = dummyU || mongoU;
+      return u
+        ? {
+            id: u.id || u._id?.toString(),
+            name: u.name,
+            profilePhoto: u.profilePhoto,
+          }
+        : {
+            id: userId,
+            name: "Citizen Resident",
+            profilePhoto: null,
+          };
+    };
+
+    // Enrich all comments with author details, upvotes, downvotes, net score, and user vote state
+    const commentMap = new Map<string, any>();
+    const topLevelComments: any[] = [];
+
+    // Pre-populate map
+    allComms.forEach((c: any) => {
+      const id = (c.id || c._id?.toString() || "").toString();
+      const upvotes: string[] = Array.isArray(c.upvotes)
+        ? c.upvotes
+        : Array.isArray(c.likedBy)
+        ? [...c.likedBy]
+        : [];
+      const downvotes: string[] = Array.isArray(c.downvotes) ? c.downvotes : [];
+      const score = upvotes.length - downvotes.length;
+
+      let userVote: "up" | "down" | null = null;
+      if (currentUserId) {
+        if (upvotes.includes(currentUserId)) {
+          userVote = "up";
+        } else if (downvotes.includes(currentUserId)) {
+          userVote = "down";
+        }
+      }
+
+      const commentText = c.comment || c.content || "";
+      const enriched = {
+        id,
+        _id: id,
+        reportId: c.reportId,
+        userId: c.userId,
+        comment: commentText,
+        content: commentText,
+        parentCommentId: c.parentCommentId || null,
+        upvotes,
+        downvotes,
+        score,
+        likes: upvotes.length,
+        likedBy: upvotes,
+        userVote,
+        createdAt: c.createdAt || new Date().toISOString(),
+        updatedAt: c.updatedAt || c.createdAt || new Date().toISOString(),
+        user: getAuthor(c.userId),
+        replies: [],
+        replyCount: 0,
+      };
+
+      commentMap.set(id, enriched);
+    });
+
+    // Assemble threaded hierarchy
+    commentMap.forEach((comment) => {
+      if (comment.parentCommentId && commentMap.has(comment.parentCommentId)) {
+        const parent = commentMap.get(comment.parentCommentId);
+        parent.replies.push(comment);
+      } else {
+        topLevelComments.push(comment);
+      }
+    });
+
+    // Sort replies within each parent comment by score descending, then oldest first
+    commentMap.forEach((comment) => {
+      if (comment.replies.length > 0) {
+        comment.replies.sort((a: any, b: any) => {
+          if (b.score !== a.score) {
+            return b.score - a.score;
+          }
+          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+        });
+        comment.replyCount = comment.replies.length;
+      }
+    });
+
+    // Sort top-level comments based on requested mode
+    if (sort === "newest") {
+      topLevelComments.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    } else if (sort === "oldest") {
+      topLevelComments.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+    } else {
+      // "top" (default): highest net score first, secondary sort by newest
+      topLevelComments.sort((a, b) => {
+        if (b.score !== a.score) {
+          return b.score - a.score;
+        }
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      comments: topLevelComments,
+      totalComments: allComms.length,
+      sort,
+    });
+  } catch (error) {
+    console.error("getComments error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch comments",
+    });
+  }
+};
+
+export const addComment = async (req: Request, res: Response) => {
+  try {
+    const { reportId } = req.params;
+    const userId = (req.session as any)?.userId || req.body.userId;
+    const rawComment = req.body.comment || req.body.content;
+    const parentCommentId = req.body.parentCommentId ? String(req.body.parentCommentId).trim() : null;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Please login to continue.",
+      });
+    }
+
+    if (!rawComment || typeof rawComment !== "string" || !rawComment.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Comment text is required",
+      });
+    }
+
+    const trimmedComment = rawComment.trim();
+    if (trimmedComment.length > 3000) {
+      return res.status(400).json({
+        success: false,
+        message: "Comment exceeds maximum limit of 3000 characters",
+      });
+    }
+
+    // Access control: Sensitive reports do NOT accept community comments
+    let targetRep = runtimeDummyReports.find((r: any) => r._id === reportId);
+    if (!targetRep && mongoose.connection.readyState === 1) {
+      targetRep = await reportDetails.findById(reportId).lean();
+    }
+    if (targetRep && targetRep.sensitivity && targetRep.sensitivity.status === "sensitive") {
+      return res.status(403).json({
+        success: false,
+        message: "Sensitive grievances are restricted and do not accept community comments.",
+      });
+    }
+
+    // If this is a reply, verify parent comment exists and belongs to the same report
+    if (parentCommentId) {
+      const dummyParent = runtimeDummyComments.find(
+        (c: any) => c.id === parentCommentId || c._id?.toString() === parentCommentId
+      );
+      let mongoParent: any = null;
+      if (!dummyParent && parentCommentId.match(/^[0-9a-fA-F]{24}$/)) {
+        mongoParent = await Comment.findById(parentCommentId).lean();
+      }
+
+      const parent = dummyParent || mongoParent;
+      if (!parent) {
+        return res.status(404).json({
+          success: false,
+          message: "Parent comment not found",
+        });
+      }
+
+      if (parent.reportId !== reportId) {
+        return res.status(400).json({
+          success: false,
+          message: "Parent comment does not belong to this report",
+        });
+      }
+    }
+
+    const isDummyReport = runtimeDummyReports.some((r: any) => r._id === reportId);
+    let createdCommentId: string;
+    let createdAtDate = new Date();
+
+    if (isDummyReport) {
+      createdCommentId = `comment_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+      const newCommentObj = {
+        id: createdCommentId,
+        _id: createdCommentId,
+        reportId,
+        userId,
+        comment: trimmedComment,
+        content: trimmedComment,
+        parentCommentId: parentCommentId || null,
+        upvotes: [],
+        downvotes: [],
+        score: 0,
+        likes: 0,
+        likedBy: [],
+        createdAt: createdAtDate.toISOString(),
+        updatedAt: createdAtDate.toISOString(),
+      };
+      runtimeDummyComments.unshift(newCommentObj);
+    } else {
+      const mongoComment = new Comment({
+        reportId,
+        userId,
+        comment: trimmedComment,
+        parentCommentId: parentCommentId || null,
+        upvotes: [],
+        downvotes: [],
+        likes: 0,
+        likedBy: [],
+      });
+      await mongoComment.save();
+      createdCommentId = mongoComment._id.toString();
+      createdAtDate = mongoComment.createdAt || createdAtDate;
+    }
+
+    // Hydrate author details
+    const dummyU = runtimeDummyUsers.find(
+      (user: any) => user.id === userId || user.username === userId
+    );
+    let mongoU: any = null;
+    if (!dummyU && userId.match(/^[0-9a-fA-F]{24}$/)) {
+      mongoU = await User.findById(userId).lean();
+    }
+    const u = dummyU || mongoU;
+
+    const enrichedComment = {
+      id: createdCommentId,
+      _id: createdCommentId,
+      reportId,
+      userId,
+      comment: trimmedComment,
+      content: trimmedComment,
+      parentCommentId: parentCommentId || null,
+      upvotes: [],
+      downvotes: [],
+      score: 0,
+      likes: 0,
+      likedBy: [],
+      userVote: null,
+      createdAt: createdAtDate.toISOString(),
+      updatedAt: createdAtDate.toISOString(),
+      user: u
+        ? {
+            id: u.id || u._id?.toString(),
+            name: u.name,
+            profilePhoto: u.profilePhoto,
+          }
+        : {
+            id: userId,
+            name: "Citizen Resident",
+            profilePhoto: null,
+          },
+      replies: [],
+      replyCount: 0,
+    };
+
+    return res.status(200).json({
+      success: true,
+      comment: enrichedComment,
+    });
+  } catch (error) {
+    console.error("addComment error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to post comment",
+    });
+  }
+};
+
+export const replyComment = async (req: Request, res: Response) => {
+  req.body.parentCommentId = req.params.commentId;
+  return addComment(req, res);
+};
+
+export const voteComment = async (req: Request, res: Response) => {
+  try {
+    const commentId = String(req.params.commentId || "");
+    const userId = (req.session as any)?.userId || req.body.userId;
+    const direction = req.body.direction; // "up" | "down"
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Please login to continue.",
+      });
+    }
+
+    if (direction !== "up" && direction !== "down") {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid vote direction. Must be 'up' or 'down'",
+      });
+    }
+
+    // 1. Check runtime dummy comments
+    const dummyComm = runtimeDummyComments.find(
+      (c: any) => c.id === commentId || c._id?.toString() === commentId
+    );
+
+    if (dummyComm) {
+      const dummyRep = runtimeDummyReports.find((r: any) => r._id === dummyComm.reportId);
+      if (dummyRep && dummyRep.sensitivity && dummyRep.sensitivity.status === "sensitive") {
+        return res.status(403).json({
+          success: false,
+          message: "Voting on comments for sensitive grievances is restricted.",
+        });
+      }
+
+      if (!Array.isArray(dummyComm.upvotes)) {
+        dummyComm.upvotes = Array.isArray(dummyComm.likedBy) ? [...dummyComm.likedBy] : [];
+      }
+      if (!Array.isArray(dummyComm.downvotes)) {
+        dummyComm.downvotes = [];
+      }
+
+      let userVote: "up" | "down" | null = null;
+      const upIdx = dummyComm.upvotes.indexOf(userId);
+      const downIdx = dummyComm.downvotes.indexOf(userId);
+
+      if (direction === "up") {
+        if (upIdx !== -1) {
+          // Toggle off
+          dummyComm.upvotes.splice(upIdx, 1);
+          userVote = null;
+        } else {
+          // Switch from downvote or new upvote
+          if (downIdx !== -1) {
+            dummyComm.downvotes.splice(downIdx, 1);
+          }
+          dummyComm.upvotes.push(userId);
+          userVote = "up";
+        }
+      } else {
+        // direction === "down"
+        if (downIdx !== -1) {
+          // Toggle off
+          dummyComm.downvotes.splice(downIdx, 1);
+          userVote = null;
+        } else {
+          // Switch from upvote or new downvote
+          if (upIdx !== -1) {
+            dummyComm.upvotes.splice(upIdx, 1);
+          }
+          dummyComm.downvotes.push(userId);
+          userVote = "down";
+        }
+      }
+
+      const score = dummyComm.upvotes.length - dummyComm.downvotes.length;
+      dummyComm.likes = dummyComm.upvotes.length;
+      dummyComm.likedBy = [...dummyComm.upvotes];
+
+      return res.status(200).json({
+        success: true,
+        commentId,
+        score,
+        upvotesCount: dummyComm.upvotes.length,
+        downvotesCount: dummyComm.downvotes.length,
+        userVote,
+        upvotes: dummyComm.upvotes,
+        downvotes: dummyComm.downvotes,
+        liked: userVote === "up",
+        likes: dummyComm.likes,
+      });
+    }
+
+    // 2. Check MongoDB comment
+    if (!commentId.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(404).json({
+        success: false,
+        message: "Comment not found",
+      });
+    }
+
+    const mongoComm = await Comment.findById(commentId);
+    if (!mongoComm) {
+      return res.status(404).json({
+        success: false,
+        message: "Comment not found",
+      });
+    }
+
+    const mongoRep = await reportDetails.findById(mongoComm.reportId).lean();
+    if (mongoRep && mongoRep.sensitivity && mongoRep.sensitivity.status === "sensitive") {
+      return res.status(403).json({
+        success: false,
+        message: "Voting on comments for sensitive grievances is restricted.",
+      });
+    }
+
+    const currentUpvotes: string[] = Array.isArray(mongoComm.upvotes)
+      ? mongoComm.upvotes
+      : Array.isArray(mongoComm.likedBy)
+      ? [...mongoComm.likedBy]
+      : [];
+    const currentDownvotes: string[] = Array.isArray(mongoComm.downvotes) ? mongoComm.downvotes : [];
+
+    const hasUpvoted = currentUpvotes.includes(userId);
+    const hasDownvoted = currentDownvotes.includes(userId);
+    let userVote: "up" | "down" | null = null;
+
+    if (direction === "up") {
+      if (hasUpvoted) {
+        // Toggle off: remove user from upvotes and likedBy
+        await Comment.findByIdAndUpdate(commentId, {
+          $pull: { upvotes: userId, likedBy: userId },
+        });
+        userVote = null;
+      } else {
+        // Remove from downvotes if switching, add to upvotes
+        await Comment.findByIdAndUpdate(commentId, {
+          $pull: { downvotes: userId },
+          $addToSet: { upvotes: userId, likedBy: userId },
+        });
+        userVote = "up";
+      }
+    } else {
+      // direction === "down"
+      if (hasDownvoted) {
+        // Toggle off: remove user from downvotes
+        await Comment.findByIdAndUpdate(commentId, {
+          $pull: { downvotes: userId },
+        });
+        userVote = null;
+      } else {
+        // Remove from upvotes/likedBy if switching, add to downvotes
+        await Comment.findByIdAndUpdate(commentId, {
+          $pull: { upvotes: userId, likedBy: userId },
+          $addToSet: { downvotes: userId },
+        });
+        userVote = "down";
+      }
+    }
+
+    // Fetch updated document to ensure authoritative persisted state
+    const updated = await Comment.findById(commentId);
+    const upvotesCount = updated?.upvotes?.length || 0;
+    const downvotesCount = updated?.downvotes?.length || 0;
+    const score = upvotesCount - downvotesCount;
+
+    // Synchronize legacy likes count field
+    await Comment.findByIdAndUpdate(commentId, { $set: { likes: upvotesCount } });
+
+    return res.status(200).json({
+      success: true,
+      commentId,
+      score,
+      upvotesCount,
+      downvotesCount,
+      userVote,
+      upvotes: updated?.upvotes || [],
+      downvotes: updated?.downvotes || [],
+      liked: userVote === "up",
+      likes: upvotesCount,
+    });
+  } catch (error) {
+    console.error("voteComment error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to vote comment",
+    });
+  }
+};
+
+// Legacy compatibility endpoint: redirects like to upvote toggle
+export const likeComment = async (req: Request, res: Response) => {
+  req.body.direction = "up";
+  return voteComment(req, res);
+};
+

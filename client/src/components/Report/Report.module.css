@@ -308,6 +308,137 @@
 }
 
 /* ============================================================
+   AUDIO TTS CONTROLS & ANIMATIONS
+============================================================ */
+
+.ttsBar {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 5px 12px 5px 6px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+}
+
+.ttsBar:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
+}
+
+.ttsBarActive {
+  border-color: #a5b4fc;
+  background: #f5f3ff;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.15);
+}
+
+.ttsPlayButton {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: #4f46e5;
+  color: #ffffff;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+  box-shadow: 0 2px 5px rgba(79, 70, 229, 0.3);
+}
+
+.ttsPlayButton:hover {
+  background: #4338ca;
+  transform: scale(1.06);
+  box-shadow: 0 3px 8px rgba(79, 70, 229, 0.4);
+}
+
+.ttsPlayButton:active {
+  transform: scale(0.96);
+}
+
+.ttsPlayButton:focus-visible {
+  outline: 2px solid #6366f1;
+  outline-offset: 2px;
+}
+
+.ttsPlayButtonPlaying {
+  background: #ef4444;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+  animation: pulsePlay 1.6s infinite;
+}
+
+@keyframes pulsePlay {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(239, 68, 68, 0);
+  }
+}
+
+.ttsStatusText {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: #475569;
+}
+
+.ttsBarActive .ttsStatusText {
+  color: #4338ca;
+  font-weight: 600;
+}
+
+.audioWave {
+  display: inline-flex;
+  align-items: center;
+  gap: 2.5px;
+  height: 14px;
+  margin-left: 2px;
+}
+
+.audioWave span {
+  display: inline-block;
+  width: 3px;
+  background: #6366f1;
+  border-radius: 999px;
+  animation: wave 1s ease-in-out infinite alternate;
+}
+
+.audioWave span:nth-child(1) {
+  height: 6px;
+  animation-delay: 0.1s;
+}
+
+.audioWave span:nth-child(2) {
+  height: 14px;
+  animation-delay: 0.3s;
+}
+
+.audioWave span:nth-child(3) {
+  height: 9px;
+  animation-delay: 0.15s;
+}
+
+.audioWave span:nth-child(4) {
+  height: 12px;
+  animation-delay: 0.4s;
+}
+
+@keyframes wave {
+  0% {
+    transform: scaleY(0.4);
+  }
+  100% {
+    transform: scaleY(1);
+  }
+}
+
+/* ============================================================
    INPUT AREA
 ============================================================ */
 
@@ -371,6 +502,70 @@
 .micButton:hover {
   background: #e2e8f0;
   color: #4f46e5;
+}
+
+.micActive {
+  background: #ef4444 !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 10px rgba(239, 68, 68, 0.45);
+  animation: micPulse 1.2s infinite;
+}
+
+@keyframes micPulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5);
+  }
+  50% {
+    transform: scale(1.08);
+    box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
+  }
+}
+
+.sttLangToggle {
+  height: 30px;
+  padding: 0 8px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #475569;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.sttLangToggle:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+  color: #0f172a;
+  transform: translateY(-1px);
+}
+
+.sttLangActive {
+  background: #eef2ff;
+  border-color: #6366f1;
+  color: #4f46e5;
+  box-shadow: 0 1px 4px rgba(99, 102, 241, 0.15);
+}
+
+.sttAlert {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  color: #b91c1c;
+  font-size: 12px;
+  animation: fadeIn 0.2s ease;
 }
 
 .sendButton {
